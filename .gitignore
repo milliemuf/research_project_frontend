@@ -1,0 +1,66 @@
+# --- Dependencies ---
+node_modules/
+
+# --- Build output ---
+dist/
+build/
+
+# --- Editor / IDE ---
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Local tooling (not part of the project) ---
+.claude/
+
+# --- Environment files (may contain local URLs / secrets) ---
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.production.local
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Research / paper documents (kept local, not in repo) ---
+# Research and review papers
+CodeFlow_AI_Review_Paper*.md
+CodeFlow_AI_Review_Paper*.pdf
+CodeFlow_AI_Review_Paper*.docx
+CodeFlow_AI_Technical_Paper.md
+CodeFlow_AI_Technical_Paper.docx
+
+# Friend's reference paper and rejection screenshots
+Journal
+Journal.docx
+Journal_extracted.txt
+Journal_image1.png
+research1.jpeg
+research2.jpeg
+
+# Paper figures (kept local)
+Figure1_PRISMA.*
+Figure2_ConceptualFramework.*
+Figure3_Taxonomy.*
+Tech_Figure*.png
+Tech_Figure*.tiff
+
+# Lockfile-related backups Word leaves behind
+~$*.docx
+~$*.doc
+
+# --- Misc temp / draft files ---
+_*.py
+*.tmp
+*.bak

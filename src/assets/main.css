@@ -1,0 +1,276 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * CodeFlow AI — theming
+ * Author: Millicent Mufambi (H240624A) · Harare Institute of Technology
+ *
+ * The whole UI pivots on CSS variables. Toggling <html class="dark"|"light">
+ * swaps the ink palette, the body radial glow, the grid line color and the
+ * white/black opacity overlays — no template changes required.
+ */
+
+:root { --grid: 28px; }
+
+html.dark {
+  color-scheme: dark;
+  --ink-950: 7 10 18;      /* #070A12  page */
+  --ink-900: 11 15 26;     /* #0B0F1A  surface */
+  --ink-850: 16 22 42;     /* #10162A */
+  --ink-800: 21 28 51;     /* #151C33 */
+  --ink-700: 29 38 63;     /* #1D263F */
+  --ink-600: 40 50 81;     /* #283251 */
+  --ink-500: 58 69 102;    /* #3A4566 */
+  --ink-400: 92 103 136;   /* #5C6788 */
+  --ink-300: 133 144 176;  /* #8590B0 */
+  --ink-200: 180 188 211;  /* #B4BCD3 */
+  --ink-100: 221 226 240;  /* #DDE2F0  primary text */
+
+  --overlay-rgb: 255 255 255;    /* white-on-dark for bg-white/x, border-white/x */
+  --grid-line: rgba(255,255,255,0.04);
+  --panel-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 30px 60px -30px rgba(0,0,0,0.65);
+  --page-glow:
+    radial-gradient(60% 50% at 50% -10%, rgba(124,140,255,0.18) 0%, rgba(7,10,18,0) 60%),
+    radial-gradient(40% 40% at 100% 0%, rgba(34,211,238,0.10) 0%, rgba(7,10,18,0) 60%),
+    radial-gradient(40% 40% at 0% 100%, rgba(168,85,247,0.10) 0%, rgba(7,10,18,0) 60%);
+}
+
+html.light {
+  color-scheme: light;
+  /*
+   * Light mode: the page is a soft slate-grey so white panels lift off the
+   * background and coloured dots/strokes stay visible. 950 is still the page
+   * token and 900 is the panel token — the relative order is preserved.
+   */
+  --ink-950: 226 232 240;  /* #E2E8F0  page (slate-200) */
+  --ink-900: 255 255 255;  /* #FFFFFF  panel */
+  --ink-850: 248 250 252;  /* #F8FAFC */
+  --ink-800: 241 245 249;  /* #F1F5F9 */
+  --ink-700: 203 213 225;  /* #CBD5E1 */
+  --ink-600: 148 163 184;  /* #94A3B8 */
+  --ink-500: 100 116 139;  /* #64748B */
+  --ink-400: 71 85 105;    /* #475569 */
+  --ink-300: 51 65 85;     /* #334155 */
+  --ink-200: 30 41 59;     /* #1E293B */
+  --ink-100: 15 23 42;     /* #0F172A  primary text */
+
+  --overlay-rgb: 15 23 42;       /* ink on light, so translucent overlays are visible */
+  --grid-line: rgba(15,23,42,0.06);
+  --panel-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 10px 30px -12px rgba(15,23,42,0.12);
+  --page-glow:
+    radial-gradient(60% 50% at 50% -10%, rgba(124,140,255,0.14) 0%, rgba(226,232,240,0) 60%),
+    radial-gradient(40% 40% at 100% 0%, rgba(34,211,238,0.12) 0%, rgba(226,232,240,0) 60%),
+    radial-gradient(40% 40% at 0% 100%, rgba(168,85,247,0.12) 0%, rgba(226,232,240,0) 60%);
+}
+
+html, body, #app { height: 100%; }
+body {
+  @apply bg-ink-950 text-ink-100 antialiased;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-image: var(--page-glow);
+  background-attachment: fixed;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+/* Grid backdrop overlay */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid) var(--grid);
+}
+
+/*
+ * Light-mode overrides for the translucent overlays that are hardcoded across
+ * templates as bg-white/x, border-white/x, ring-white/x. On white these would
+ * vanish, so we repaint them with the semantic --overlay-rgb (ink on light).
+ */
+html.light .bg-white\/5         { background-color: rgb(var(--overlay-rgb) / 0.05); }
+html.light .bg-white\/10        { background-color: rgb(var(--overlay-rgb) / 0.08); }
+html.light .bg-white\/\[0\.02\] { background-color: rgb(var(--overlay-rgb) / 0.025); }
+html.light .bg-white\/\[0\.04\] { background-color: rgb(var(--overlay-rgb) / 0.04); }
+html.light .border-white\/5     { border-color: rgb(var(--overlay-rgb) / 0.08); }
+html.light .border-white\/10    { border-color: rgb(var(--overlay-rgb) / 0.12); }
+html.light .border-white\/\[0\.04\]{ border-color: rgb(var(--overlay-rgb) / 0.06); }
+html.light .ring-white\/5       { --tw-ring-color: rgb(var(--overlay-rgb) / 0.08); }
+html.light .ring-white\/10      { --tw-ring-color: rgb(var(--overlay-rgb) / 0.12); }
+html.light .divide-white\/5 > * + * { border-color: rgb(var(--overlay-rgb) / 0.08); }
+
+/* Layout: panel = the new "card" */
+.panel {
+  @apply relative rounded-2xl border border-white/5 bg-ink-900/70 backdrop-blur-xl;
+  box-shadow: var(--panel-shadow);
+}
+.panel-quiet {
+  @apply rounded-xl border border-white/5 bg-ink-850/60;
+}
+.panel-header {
+  @apply flex items-center justify-between px-5 py-3 border-b border-white/5;
+}
+.panel-title {
+  @apply font-display text-sm uppercase tracking-[0.18em] text-ink-300;
+}
+.panel-body { @apply p-5; }
+
+/* Display chrome */
+.kbd {
+  @apply font-mono text-[10px] px-1.5 py-0.5 rounded border border-white/10 bg-ink-800 text-ink-300;
+}
+.tag {
+  @apply inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider;
+}
+.tag-violet  { @apply bg-violet-500/10  text-violet-300  ring-1 ring-violet-500/30; }
+.tag-cyan    { @apply bg-cyan-500/10    text-cyan-300    ring-1 ring-cyan-500/30; }
+.tag-emerald { @apply bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30; }
+.tag-amber   { @apply bg-amber-500/10   text-amber-300   ring-1 ring-amber-500/30; }
+.tag-rose    { @apply bg-rose-500/10    text-rose-300    ring-1 ring-rose-500/30; }
+.tag-slate   { @apply bg-white/5        text-ink-300     ring-1 ring-white/10; }
+
+/* Severity */
+.sev-critical { @apply tag bg-rose-500/15    text-rose-300    ring-1 ring-rose-500/30; }
+.sev-high     { @apply tag bg-orange-500/15  text-orange-300  ring-1 ring-orange-500/30; }
+.sev-medium   { @apply tag bg-amber-500/15   text-amber-300   ring-1 ring-amber-500/30; }
+.sev-low      { @apply tag bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30; }
+
+/* Status pills */
+.status {
+  @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider;
+}
+.status-detected         { @apply bg-blue-500/10    text-blue-300    ring-1 ring-blue-500/30; }
+.status-analyzing        { @apply bg-violet-500/10  text-violet-300  ring-1 ring-violet-500/30; }
+.status-fix_proposed     { @apply bg-cyan-500/10    text-cyan-300    ring-1 ring-cyan-500/30; }
+.status-consensus_pending{ @apply bg-amber-500/10   text-amber-300   ring-1 ring-amber-500/30; }
+.status-resolved         { @apply bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30; }
+.status-failed           { @apply bg-rose-500/10    text-rose-300    ring-1 ring-rose-500/30; }
+
+/* Status dot */
+.dot { @apply w-2 h-2 rounded-full inline-block; }
+.dot-online   { background:#34D399; box-shadow:0 0 10px rgba(52,211,153,.7); }
+.dot-busy     { background:#F59E0B; box-shadow:0 0 10px rgba(245,158,11,.7); }
+.dot-offline  { background:#475569; }
+
+/* Buttons */
+.btn { @apply inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium font-mono uppercase tracking-wider transition; }
+.btn-primary { @apply bg-brand-500 text-white hover:bg-brand-600 active:scale-[.98]; box-shadow: 0 0 0 1px rgba(124,140,255,.35), 0 0 24px rgba(124,140,255,.25); }
+.btn-ghost   { @apply bg-white/5 text-ink-200 hover:bg-white/10 ring-1 ring-white/10; }
+.btn-danger  { @apply bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 ring-1 ring-rose-500/30; }
+
+/* Code blocks */
+.code, pre.code, .code pre {
+  @apply font-mono text-[12.5px] leading-[1.55] text-ink-100;
+}
+.code-block {
+  @apply rounded-xl border border-white/5 bg-ink-950/80 overflow-hidden;
+}
+.code-block .code-head {
+  @apply flex items-center justify-between px-3 py-2 border-b border-white/5 bg-white/[0.02] text-[11px] font-mono uppercase tracking-wider text-ink-400;
+}
+.code-block pre {
+  @apply m-0 p-4 overflow-x-auto;
+}
+
+/* Diff lines */
+.diff-row { @apply font-mono text-[12.5px] leading-[1.55] px-3 py-0.5 whitespace-pre; }
+.diff-add { @apply bg-emerald-500/10 text-emerald-200 border-l-2 border-emerald-400; }
+.diff-del { @apply bg-rose-500/10    text-rose-200    border-l-2 border-rose-400; }
+.diff-ctx { @apply text-ink-300 border-l-2 border-transparent; }
+.diff-hunk{ @apply text-violet-300 bg-violet-500/5 border-l-2 border-violet-400; }
+
+/* Agent identity */
+.agent-analyzer  { color:#C4B5FD; }
+.agent-healer    { color:#67E8F9; }
+.agent-validator { color:#6EE7B7; }
+.bg-agent-analyzer  { background: linear-gradient(135deg, #A855F7, #6366F1); }
+.bg-agent-healer    { background: linear-gradient(135deg, #22D3EE, #2563EB); }
+.bg-agent-validator { background: linear-gradient(135deg, #34D399, #059669); }
+.ring-analyzer  { @apply ring-1 ring-violet-500/40; }
+.ring-healer    { @apply ring-1 ring-cyan-500/40; }
+.ring-validator { @apply ring-1 ring-emerald-500/40; }
+
+/* Animated stat bar */
+.bar-track { @apply h-1 rounded-full bg-white/5 overflow-hidden; }
+.bar-fill  { @apply h-full rounded-full transition-all duration-700; }
+
+/* Section heading */
+.eyebrow {
+  @apply inline-block font-mono text-[10px] uppercase tracking-[0.32em] text-ink-400;
+}
+.h-display {
+  @apply font-display text-2xl md:text-3xl font-semibold tracking-tight text-ink-100;
+}
+
+/* Marquee scanline for the live consensus visual */
+.scanline::after {
+  content: '';
+  position: absolute; left: 0; right: 0; top: 0; height: 30%;
+  background: linear-gradient(to bottom, rgba(124,140,255,0.15), transparent);
+  animation: scan 4s linear infinite;
+  pointer-events: none;
+}
+
+/* Consensus mesh SVG — theme-aware strokes/fills so the diagram holds up on white. */
+.mesh-ring-a    { stroke: rgb(var(--overlay-rgb) / 0.10); }
+.mesh-ring-b    { stroke: rgb(var(--overlay-rgb) / 0.07); }
+.mesh-center-bg { fill:   rgb(var(--ink-900)); }
+.mesh-center-ring { stroke: rgba(124,140,255,0.45); }
+.fill-ink-muted  { fill: rgb(var(--ink-400)); }
+.fill-ink-strong { fill: rgb(var(--ink-100)); }
+
+/* Tables */
+.tbl { @apply w-full text-sm; }
+.tbl thead th { @apply text-left text-[10px] uppercase tracking-wider font-mono text-ink-400 px-4 py-2 border-b border-white/5; }
+.tbl tbody td { @apply px-4 py-3 border-b border-white/[0.04] text-ink-200; }
+.tbl tbody tr:hover { @apply bg-white/[0.02]; }
+
+/* Live indicator */
+.live-dot {
+  @apply relative inline-flex h-2 w-2;
+}
+.live-dot::after {
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 9999px;
+  background: rgba(52,211,153,0.35);
+  animation: pulseSoft 1.8s ease-in-out infinite;
+}
+.live-dot::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 9999px;
+  background: #34D399;
+  box-shadow: 0 0 10px rgba(52,211,153,0.7);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(var(--overlay-rgb) / 0.06); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--overlay-rgb) / 0.14); border: 2px solid transparent; background-clip: padding-box; }
+
+@keyframes pulseSoft { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes scan      { 0% { transform: translateY(-110%); } 100% { transform: translateY(110%); } }
+
+/* ──────── Research page utilities ──────── */
+
+/* Timeline scrub slider */
+input[type="range"].scrub-slider {
+  @apply appearance-none w-full h-1.5 rounded-full bg-ink-700 cursor-pointer;
+}
+input[type="range"].scrub-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  @apply w-4 h-4 rounded-full bg-brand-400 cursor-pointer;
+  box-shadow: 0 0 0 1px rgba(124,140,255,0.35), 0 0 16px rgba(124,140,255,0.25);
+}
+
+/* Heatmap cells */
+.heatmap-cell { transition: opacity 0.15s ease; cursor: crosshair; }
+.heatmap-cell:hover { opacity: 1 !important; filter: brightness(1.15); }
+
+/* Knowledge graph nodes */
+.graph-node { cursor: grab; }
+.graph-node:active { cursor: grabbing; }
+.graph-node:hover circle { stroke-width: 2.5; }
+
+/* Line number gutter */
+.line-num { @apply inline-block w-8 text-right pr-3 text-ink-500 select-none; }
