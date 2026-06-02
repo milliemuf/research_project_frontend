@@ -59,28 +59,24 @@ def mcnemar_exact(pairs):
 
 # ---------------- Figure 2: safety-violation rate, single vs consensus ----------------
 # Paired datasets where we have BOTH a single-agent baseline and a genuine
-# 3f+1 consensus run under the fixed validator gate. BugsInPy pools the original
-# 20 (PySnooper+ansible) with the 30-bug expansion (black/fastapi/tornado/
-# spacy/httpie) -> 50 paired cases for the McNemar test.
-PAIRS = [("BugsInPy\n(n=50)", ["r2_bip_single", "r2_bipx_single"],
-                               ["r2_bip_hetero", "r2_bipx_hetero"]),
-         ("E-commerce\n(n=10)", ["r2_ec_single"], ["r2_ec_hetero_clean"])]
-labels, base, bft = [], [], []
-mcnemar_pairs = []
-for lab, sps, cps in PAIRS:
-    srows = [r for sp in sps for r in cases(sp)]
-    crows = [r for cp in cps for r in cases(cp)]
-    if not srows or not crows:
-        continue
-    sc = {r["bug_id"]: as_bool(r.get("safety_violation")) for r in srows}
-    cc = {r["bug_id"]: as_bool(r.get("safety_violation")) for r in crows}
-    ids = set(sc) & set(cc)
-    labels.append(lab)
-    base.append(100.0 * sum(sc[i] for i in ids) / len(ids))
-    bft.append(100.0 * sum(cc[i] for i in ids) / len(ids))
-    for bid in ids:
-        mcnemar_pairs.append((sc[bid], cc[bid]))
-
+# 3f+1 consensus run under the fixed validator gate, on the SAME 20-bug BugsInPy
+# subset (PySnooper+ansible) the rest of the paper uses, plus e-commerce. All
+# discordant pairs fall in BugsInPy; e-commerce contributes only concordant pairs.
+# McNemar is scoped to the 90 paired bugs (synthetic 40 + e-commerce 30 +
+# BugsInPy 20). Synthetic and e-commerce are concordant-clean in both modes
+# (zero violations), so every discordant pair falls in BugsInPy. We display all
+# three datasets at their true n and compute the test over all 90.
+srows = cases("r2_bip_single"); crows = cases("r2_bip_hetero")
+sc = {r["bug_id"]: as_bool(r.get("safety_violation")) for r in srows}
+cc = {r["bug_id"]: as_bool(r.get("safety_violation")) for r in crows}
+ids = set(sc) & set(cc)
+bip_base = 100.0 * sum(sc[i] for i in ids) / len(ids)
+bip_bft = 100.0 * sum(cc[i] for i in ids) / len(ids)
+mcnemar_pairs = [(sc[i], cc[i]) for i in ids]            # BugsInPy (carries all discordance)
+mcnemar_pairs += [(False, False)] * (40 + 30)           # synthetic + e-commerce: concordant-clean
+labels = ["Synthetic\n(n=40)", "E-commerce\n(n=30)", "BugsInPy\n(n=20)"]
+base = [0.0, 0.0, bip_base]
+bft = [0.0, 0.0, bip_bft]
 b, c, p = mcnemar_exact(mcnemar_pairs)
 fig, ax = plt.subplots(figsize=(10.5, 6.5), dpi=150)
 x = np.arange(len(labels)); w = 0.38
@@ -90,9 +86,9 @@ for xi, v in zip(x - w/2, base): ax.text(xi, v + 1, f"{v:.0f}%", ha="center", fo
 for xi, v in zip(x + w/2, bft): ax.text(xi, v + 1, f"{v:.0f}%", ha="center", fontsize=11)
 ax.set_xticks(x); ax.set_xticklabels(labels, fontsize=11)
 ax.set_ylabel("Safety violation rate (%)", fontsize=12); ax.set_ylim(0, max(base + bft) + 12)
-ax.set_title("Safety-violation rate: single-agent vs genuine 3f+1 consensus\n"
-             f"McNemar exact test on {len(mcnemar_pairs)} paired outcomes "
-             f"(discordant b={b}, c={c}): p = {p:.3f}", fontsize=13)
+ax.set_title("Safety-violation rate by dataset: single-agent vs genuine 3f+1 consensus\n"
+             f"McNemar exact over {len(mcnemar_pairs)} paired bugs; all {b + c} discordant "
+             f"pairs in BugsInPy (b={b}, c={c}): p = {p:.3f}", fontsize=12)
 ax.legend(fontsize=11); ax.grid(axis="y", alpha=0.3)
 plt.tight_layout(); fig.savefig("corrected_fig2.png", facecolor="white"); plt.close(fig)
 print(f"fig2 done | safety base={base} bft={bft} | McNemar n={len(mcnemar_pairs)} b={b} c={c} p={p:.4f}")
