@@ -57,7 +57,7 @@ python -m benchmarks.defects4j_runner --project Lang --hetero-validators --mode 
 python -m benchmarks.defects4j_runner --project Math --hetero-validators --mode consensus --bugs 1,2,3,4,5,6,7,8,9,10
 ```
 
-LLM agents are non-deterministic (Anthropic exposes no seed; cloud providers do not guarantee bit-exact decoding), so an independent rerun will differ in detail. We pin the OpenAI and Ollama seeds and release them; what is invariant across runs is safety — no fix is reported as a repair unless it passes the executable check.
+LLM agents are non-deterministic (Anthropic exposes no seed; cloud providers do not guarantee bit-exact decoding), so an independent rerun will differ in detail. We pin the OpenAI and Ollama seeds and release them; what is invariant across runs is safety, no fix is reported as a repair unless it passes the executable check.
 
 ## 3. Expected headline outcomes (for sanity-checking a rerun)
 

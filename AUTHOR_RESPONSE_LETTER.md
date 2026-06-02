@@ -1,13 +1,13 @@
-# Response to Reviewers — Manuscript SO-26-5308 (R1)
+# Response to Reviewers, Manuscript SO-26-5308 (R1)
 
 We thank the editor and both reviewers for a careful and constructive reading. The
 revision makes four substantive additions in direct response: (1) we implement and
 empirically evaluate a semantic-equivalence quorum, so the central claim is now
 demonstrated rather than deferred; (2) we add a cross-language evaluation on Java,
 including the real Defects4J harness with its actual JUnit test oracle; (3) we demonstrate
-the Byzantine fault tolerance of the consensus layer directly — independent replicas
+the Byzantine fault tolerance of the consensus layer directly, independent replicas
 exchanging signed messages over an asynchronous, partitionable network preserve agreement
-under a malicious, equivocating primary where naive voting splits (Section 6.14) — together
+under a malicious, equivocating primary where naive voting splits (Section 6.14), together
 with run-to-run variance and latency analyses; and (4) we add a full reproduction protocol
 with exact models, seeds, prompts
 and a Docker definition. Point-by-point responses follow; section and table numbers refer
@@ -56,7 +56,7 @@ On commons-math the pipeline produced **two genuine, full-suite-verified repairs
 unanimous 4-of-4; Math-5, 3-of-4 with one validator dissenting on a fix that nevertheless
 passed the real suite)**, with consensus reached on all 9 evaluated bugs. On commons-lang
 the four independent validators reached consensus on 8 of 9 evaluated bugs, but none passed
-the full Lang suite — a concrete, honest measure of how hard real-world Java repair is, and
+the full Lang suite, a concrete, honest measure of how hard real-world Java repair is, and
 in every case the executable suite prevented an unverified fix from being reported as a
 repair (Table 10). The real oracle cleanly separates two questions the synthetic and
 snippet-level studies cannot: *consensus robustness*, which the Byzantine fault-injection
@@ -115,10 +115,10 @@ states the aim and the four research questions explicitly. We also note that RQ1
 answered on a limited n-sweep.
 
 **3. Repeatability and reliability.** Added a reproduction section (Section 5.9) with exact
-model strings — analyzer claude-sonnet-4-5-20250929 (temperature 0.3, no vote), healer/
+model strings, analyzer claude-sonnet-4-5-20250929 (temperature 0.3, no vote), healer/
 proposer gpt-4o (0.7, no vote), and the four independent validators (Claude-Haiku and
 GPT-4o-mini in the cloud, llama3.1:8b and mistral:7b served locally by Ollama, all at 0.1)
-— with token budgets, timeouts and seed handling (we pin seeds for OpenAI and Ollama;
+,  with token budgets, timeouts and seed handling (we pin seeds for OpenAI and Ollama;
 Anthropic exposes none). The Docker sandbox image and limits are specified. A supplementary
 file gives the full command sequence, the verbatim agent prompts, and a BugsInPy case-to-
 project mapping. On single-run-per-bug: we add a variance study repeating a ten-bug subset
@@ -155,13 +155,13 @@ figures are present in the source; we will verify the PDF export preserves them.
 
 - **Byzantine fault tolerance, demonstrated directly (Section 6.14).** We were careful not
   to overclaim here. The fault-injection matrix (Section 6.6) and the f = 2 study (Section
-  6.13) corrupt how a validator *votes*, which a majority quorum masks — useful, but not by
+  6.13) corrupt how a validator *votes*, which a majority quorum masks, useful, but not by
   itself the defining Byzantine property. To demonstrate that property we built an
   independent-replica realisation of the protocol: four replicas exchanging Ed25519-signed
   pre-prepare/prepare/commit messages over an asynchronous, partitionable network, and we
   pit it against a naive proposal-trust scheme. Under a **malicious primary that equivocates**
-  (proposing fix X to some replicas and fix Y to others), the naive scheme splits — honest
-  replicas commit different fixes (a safety violation) — while the protocol's 2f + 1 quorum
+  (proposing fix X to some replicas and fix Y to others), the naive scheme splits, honest
+  replicas commit different fixes (a safety violation), while the protocol's 2f + 1 quorum
   certificates keep every honest replica in agreement (no split-brain). Forged messages are
   rejected (a replica cannot impersonate another, so one Byzantine node cannot manufacture a
   quorum), f = 1 crash is tolerated while f + 1 is not, and a partition blocks progress
@@ -197,7 +197,7 @@ figures are present in the source; we will verify the PDF export preserves them.
   injected by a wrapper, and that the per-message signatures protect integrity by
   construction. Within this model the consensus is genuine 3f + 1 Byzantine fault tolerance
   evaluated in a single-process simulation; what remains future work is the *distributed*
-  setting — real inter-host messaging, network partitions and view-change under primary
+  setting, real inter-host messaging, network partitions and view-change under primary
   failure (Section 8.5).
 - **Internal-consistency reconciliation.** Table 2's BFT-MAS row now reads Byzantine
   Consensus "Yes (simulated)", Cross-Language "Partial (Java sample)", Production Ready "No

@@ -1,4 +1,4 @@
-# R2 Manuscript Rewrite Plan — genuine 3f+1 BFT (honest numbers)
+# R2 Manuscript Rewrite Plan, genuine 3f+1 BFT (honest numbers)
 
 **Purpose.** Map every OLD-narrative passage in `revise_manuscript.py` (and the
 response letter) to its NEW prose under the genuine 3f+1 design, with the real R2
@@ -6,7 +6,7 @@ numbers. Fold into `revise_manuscript.py` once the variance/latency/synthetic
 re-run (bg task `bh233x322`) lands. Numbers tagged **[PENDING RERUN]** wait on it.
 
 **User directives (binding):**
-- Manuscript presents genuine 3f+1 as *the* system. NO old-design narrative — no
+- Manuscript presents genuine 3f+1 as *the* system. NO old-design narrative, no
   "standing accepts", no "we redesigned from X to Y", no "bounded ensemble", no
   legacy comparison in the body. Current state *is* the paper.
 - Response letter answers reviewers factually / forward-looking. NO mea-culpa.
@@ -19,24 +19,24 @@ re-run (bg task `bh233x322`) lands. Numbers tagged **[PENDING RERUN]** wait on i
 
 Genuine 3f+1, f=1, n=4, quorum=3-of-4. **Four independent heterogeneous
 validators vote**: Claude-Haiku + GPT-4o-mini + llama3.1:8b + mistral:7b (2 cloud
-+ 2 local). **Healer = GPT-4o, the proposer — casts no vote.** **Analyzer =
-Claude-Sonnet, feeds the pipeline — casts no vote.** No standing accepts. A fix
++ 2 local). **Healer = GPT-4o, the proposer, casts no vote.** **Analyzer =
+Claude-Sonnet, feeds the pipeline, casts no vote.** No standing accepts. A fix
 is approved when ≥3 of the 4 independent validators accept. Sandbox is the final
 gate. Independence rule: no validator is the GPT-4o proposer; the Claude voter is
 Haiku (≠ the Sonnet analyzer).
 
 ---
 
-## FINAL NUMBERS (locked — from benchmark_results/R2_RESULTS.md + semq May-29)
+## FINAL NUMBERS (locked, from benchmark_results/R2_RESULTS.md + semq May-29)
 
-### BugsInPy (PySnooper 3 + ansible 17; 20 real bugs) — repair under 3f+1
+### BugsInPy (PySnooper 3 + ansible 17; 20 real bugs), repair under 3f+1
 - Success 10/20 (50%); F1 0.667; precision 0.5; recall 1.0; mean pairwise
   validator agreement 0.925; 10 safety violations (sandbox-caught).
 - **3 genuine split votes** (ansible-1, -12, -14): Claude-Haiku dissented NO,
   the other three approved → quorum=3 still formed → sandbox then rejected the
   fix. The dissenter was correct; quorum + sandbox = defence in depth.
 
-### Byzantine fault-injection matrix (e-commerce, 10 cases, 1 corrupted validator = Haiku) — f=1 BFT
+### Byzantine fault-injection matrix (e-commerce, 10 cases, 1 corrupted validator = Haiku), f=1 BFT
 | Behaviour | Success | Safety viol | Vote dist | BFT outcome |
 |---|---|---|---|---|
 | baseline (no fault) | 10/10 | 0 | 4/4 ×10 | all unanimous |
@@ -47,10 +47,10 @@ Haiku (≠ the Sonnet analyzer).
 | malformed output | 9/10 | 1 | 3/4 ×10 | treated as reject; quorum held |
 
 f=1 tolerance HOLDS across all five fault types. (The few safety violations are
-the weak-oracle sandbox catching plausible-but-wrong fixes — not consensus
+the weak-oracle sandbox catching plausible-but-wrong fixes, not consensus
 failures.)
 
-### f=2 tight bound (n=7, quorum=5; homogeneous llama3.1 replicas) — exactness of the bound
+### f=2 tight bound (n=7, quorum=5; homogeneous llama3.1 replicas), exactness of the bound
 | Scenario | Byzantine | Consensus formed | Prepare votes | Outcome |
 |---|---|---|---|---|
 | clean | 0 | 5/5 | 7 | baseline |
@@ -62,11 +62,11 @@ failures.)
 Vote cliff 7 → 5 → 4 as rejecters go 0 → 2 → 3. Tolerates exactly f, no more.
 Bound is real and tight, not asserted.
 
-### Defects4J (real Java; `defects4j compile && test` oracle) — repair capability
+### Defects4J (real Java; `defects4j compile && test` oracle), repair capability
 - **Lang:** 9 evaluated (Lang-2 checkout-failed), fix_success 0/9, consensus
   approval 8/9 (Lang-7 rejected, 0 votes), splits Lang-1 & Lang-6 (3/4, Haiku
   dissent).
-- **Math:** 9 evaluated (Math-8 checkout-failed), **fix_success 2/9 — GENUINE
+- **Math:** 9 evaluated (Math-8 checkout-failed), **fix_success 2/9, GENUINE
   fixes Math-3 (4/4) and Math-5 (3/4, Haiku dissented but the fix actually
   PASSED real JUnit → dissenter wrong here)**, consensus approval 9/9, trigger-
   test pass rate 0.333.
@@ -75,24 +75,24 @@ Bound is real and tight, not asserted.
   fixes). Most consensus-approved fixes fail the real suite → honest safety
   violations (validators accept plausible code the suite rejects).
 
-### McNemar safety / success (pooled 50 BugsInPy pairs) — DIRECTIONAL, not significant
+### McNemar safety / success (pooled 50 BugsInPy pairs), DIRECTIONAL, not significant
 - Safety violations: single 66% → 3f+1 54% (b=9, c=3; **p = 0.146, n.s.**).
 - Success: single 32% → 3f+1 42% (**p = 0.227, n.s.**).
 - Both directional, underpowered. The expansion (new projects) diluted the
   PySnooper+ansible discordant ratio. **Reframe: lead with BFT robustness
   (provable); report safety/repair as directional and honest.**
 
-### Semantic-equivalence quorum (4 Ollama proposers; quorum=3) — May-29 numbers (proposer-side study; validator fix does not affect it)
+### Semantic-equivalence quorum (4 Ollama proposers; quorum=3), May-29 numbers (proposer-side study; validator fix does not affect it)
 | Dataset | n | Exact quorum | Semantic quorum | Semantic on passing fix | Sem safety viol | Mean agree (exact / sem) |
 |---|---|---|---|---|---|---|
 | Synthetic | 40 | 2.5% | 70.0% | 60.0% | 10.0% | 0.18 / 0.54 |
 | E-commerce | 30 | 10.0% | 76.7% | 60.0% | 16.7% | 0.20 / 0.54 |
 
-### [PENDING RERUN — bg task bh233x322]
-- **Synthetic consensus (3f+1)** — headline synthetic dataset (re-running fresh 40).
+### [PENDING RERUN, bg task bh233x322]
+- **Synthetic consensus (3f+1)**, headline synthetic dataset (re-running fresh 40).
   Interim: first 31/31 valid cases succeeded, 0 safety violations.
-- **Variance** — 10-bug synthetic subset ×3 (consensus stability).
-- **Latency n-sweep** — n=4 / 7 / 10, p50/p99 durations.
+- **Variance**, 10-bug synthetic subset ×3 (consensus stability).
+- **Latency n-sweep**, n=4 / 7 / 10, p50/p99 durations.
 
 ---
 
@@ -101,12 +101,12 @@ Bound is real and tight, not asserted.
 > Each item: `find_para` anchor → NEW text. Replaces the correspondingly-anchored
 > `set_text`/`insert_after` in `revise_manuscript.py`. Where the OLD script edits
 > the same paragraph multiple times (abstract, §6.6, RQ1), the NEW text is the
-> single consolidated version — delete the redundant later re-edits.
+> single consolidated version, delete the redundant later re-edits.
 
-### §3.2 PBFT consensus — anchor "The consensus engine runs PBFT with f = 1"
+### §3.2 PBFT consensus, anchor "The consensus engine runs PBFT with f = 1"
 NEW:
 > The consensus engine runs PBFT with f = 1 over four **independent** validator
-> replicas (n = 3f + 1 = 4), each a different model — Claude-Haiku, GPT-4o-mini,
+> replicas (n = 3f + 1 = 4), each a different model, Claude-Haiku, GPT-4o-mini,
 > llama3.1:8b and mistral:7b. The Healer (GPT-4o) is the proposer: it submits one
 > candidate fix and casts no vote; a byte digest binds every prepare and commit
 > to that proposal, as in classical PBFT. The Analyzer (Claude-Sonnet) feeds the
@@ -124,7 +124,7 @@ NEW:
 > implemented; primary-failure recovery under continuous faults is future work
 > (Section 8.2).
 
-### Threat-model / scope insert — after §3.2 (replace the "bounded ensemble" insert)
+### Threat-model / scope insert, after §3.2 (replace the "bounded ensemble" insert)
 NEW:
 > Threat model and scope. The prototype runs all four validator replicas as
 > asynchronous tasks inside one trusted Python process; there is no real network,
@@ -134,13 +134,13 @@ NEW:
 > approve, random, timeout or garbage behaviour (Section 5.5). Within this model
 > the consensus is genuine 3f + 1 Byzantine fault tolerance: four independent,
 > model-diverse validators vote, and the f = 1 quorum tolerates exactly one
-> corrupted voter — demonstrated empirically (Section 6.6) and shown to be tight
+> corrupted voter, demonstrated empirically (Section 6.6) and shown to be tight
 > at f = 2 (Section 6.x). What remains out of scope is the *distributed* setting:
 > real inter-host messaging, network partitions and view-change under primary
 > failure. We evaluate genuine BFT consensus in a single-process simulation;
 > hardening it for a distributed deployment is the natural next step (Section 8).
 
-### §6.6 Byzantine fault injection — anchor "To test the namesake property, one ... was wrapped"
+### §6.6 Byzantine fault injection, anchor "To test the namesake property, one ... was wrapped"
 NEW:
 > To test the namesake property, one of the four independent validators was
 > wrapped in a ByzantineWrapper set to each of the five misbehaviours, leaving
@@ -160,18 +160,18 @@ DELETE the OLD re-edits that reframe this as "quorum arithmetic, not PBFT":
 - the second "To test the namesake property ... because the Analyzer and Healer
   accept by default" re-edit (~929).
 
-### Figure 5 caption — anchor "Figure 5. Byzantine fault-injection results"
+### Figure 5 caption, anchor "Figure 5. Byzantine fault-injection results"
 NEW:
 > Figure 5. Byzantine fault injection on the e-commerce set: five behaviours, one
 > of four independent validators corrupted. With f = 1 and a 2f + 1 = 3 quorum the
-> system tolerates the corrupted validator in every case — liveness holds under
+> system tolerates the corrupted validator in every case, liveness holds under
 > always-reject and timeout, safety holds under always-approve and random, and
 > malformed output is treated as a reject. This is genuine 3f + 1 Byzantine fault
 > tolerance evaluated in a single-process simulation; the sandbox (right bars)
 > catches the few plausible-but-wrong fixes the validators admit, giving defence
 > in depth.
 
-### NEW Figure 6 / §6.x — f=2 tight bound (add; corrected_fig6.png exists)
+### NEW Figure 6 / §6.x, f=2 tight bound (add; corrected_fig6.png exists)
 NEW prose:
 > To show the f = 1 result is not a ceiling and that the bound is exact, we re-ran
 > the e-commerce set at f = 2 (n = 7, quorum = 5) with seven independent voters
@@ -181,16 +181,16 @@ NEW prose:
 > honest validators remain, below the quorum of five, and consensus provably
 > cannot form in any case. Prepare votes fall 7 → 5 → 4 as faults go 0 → 2 → 3
 > (Figure 6, Table x). The system therefore tolerates exactly f Byzantine voters
-> and no more — the BFT guarantee is demonstrated and the bound is tight, not
+> and no more, the BFT guarantee is demonstrated and the bound is tight, not
 > asserted.
 
 Add to script: `swap_media(_doc, "word/media/imageN.png", "corrected_fig6.png", ...)`
 (choose a free image slot / insert as a new inline figure) + a Table for the cliff.
 
-### Abstract — anchor "Abstract:" (consolidated; delete the 3 later abstract re-edits)
+### Abstract, anchor "Abstract:" (consolidated; delete the 3 later abstract re-edits)
 NEW:
 > Automated program repair with large language models (LLMs) has a safety gap: a
-> single model often returns a confident but wrong fix that breaks working code —
+> single model often returns a confident but wrong fix that breaks working code , 
 > in e-commerce, double charges, negative stock or broken refunds. We ask whether
 > genuine Byzantine fault-tolerant (BFT) consensus over a population of
 > independent LLM agents can remove unsafe fixes while preserving repair ability.
@@ -212,20 +212,20 @@ NEW:
 > targets a formal semantic-equivalence relation, distributed deployment with
 > network faults, and broader Java coverage.
 
-### RQ1 — anchors "The empirical answer to RQ1 is n = 4" and "RQ1. What is the optimal number"
+### RQ1, anchors "The empirical answer to RQ1 is n = 4" and "RQ1. What is the optimal number"
 NEW (RQ1 answer):
 > The answer to RQ1 is n = 4, f = 1: the minimum PBFT-compliant configuration of
 > four independent validators gives the best repair success and lowest latency,
 > and the fault-injection study confirms it genuinely tolerates one Byzantine
 > voter (Section 6.6). Raising the population to n = 7 (f = 2) buys tolerance to a
-> second Byzantine voter — which the tight-bound study confirms is real (Section
-> 6.x) — at higher latency and no repair gain, so n = 4 is the practical optimum
+> second Byzantine voter, which the tight-bound study confirms is real (Section
+> 6.x), at higher latency and no repair gain, so n = 4 is the practical optimum
 > for f = 1.
 
 DELETE the OLD "we do not rest this on the fault-injection runs, whose 100%
 consensus-formation figure follows from the quorum arithmetic" caveat.
 
-### §8.5 — anchor "The Byzantine wrapper sits only on validators here."
+### §8.5, anchor "The Byzantine wrapper sits only on validators here."
 The OLD §8.5 describes the *path to* genuine 3f+1 (standing accepts → independent
 voters). That path is now realised. REPLACE with distributed-deployment future
 work:
@@ -237,7 +237,7 @@ work:
 > proposer that can itself misbehave. That is the path from BFT consensus
 > demonstrated in simulation to BFT consensus demonstrated over a network.
 
-### §7.1 ensemble framing — anchor "BFT-MAS strictly improves safety here."
+### §7.1 ensemble framing, anchor "BFT-MAS strictly improves safety here."
 Keep the ensemble-learning connection (Dietterich; self-consistency; debate) but
 drop "best read as a bounded ensemble rather than a heuristic vote." NEW closing:
 > ... BFT-MAS adds what these lack: a genuine PBFT quorum over independent,
@@ -247,27 +247,27 @@ drop "best read as a bounded ensemble rather than a heuristic vote." NEW closing
 Update the discordant-pairs / McNemar sentence to the honest directional numbers
 (see Statistics block below).
 
-### Defects4J / cross-language — anchors "We also ran the pipeline on Java" (crosslang_body) + Table 10
+### Defects4J / cross-language, anchors "We also ran the pipeline on Java" (crosslang_body) + Table 10
 NEW crosslang_body:
 > We ran the pipeline on real Java bugs through the Defects4J benchmark's own
-> checkout, compile and test harness in Docker — the actual JUnit suites, not a
+> checkout, compile and test harness in Docker, the actual JUnit suites, not a
 > proxy oracle. The healer emits a minimal search-and-replace edit and is shown
 > the failing test; every candidate is verified against the project's real test
 > suite, so a repair counts only if the suite passes. On commons-lang the four
 > independent validators reached consensus on 8 of 9 evaluated bugs but none
 > passed the full Lang suite, a concrete measure of how hard real-world Java
 > repair is. On commons-math the pipeline produced two genuine, full-suite-
-> verified repairs — Math-3 (unanimous 4/4) and Math-5 (3/4, one validator
-> dissenting on a fix that nevertheless passed the real suite) — with consensus
+> verified repairs, Math-3 (unanimous 4/4) and Math-5 (3/4, one validator
+> dissenting on a fix that nevertheless passed the real suite), with consensus
 > reached on all 9 evaluated bugs. The real oracle cleanly separates two things
 > the synthetic and snippet-level studies cannot: consensus robustness, which the
 > Byzantine matrix proves, and repair capability, which on hard real Java bugs is
 > modest and which we report honestly. Most consensus-approved Java fixes fail the
-> real suite — honest safety violations where the validators accept plausible code
-> the tests reject — which is exactly why the executable suite, not the vote, is
+> real suite, honest safety violations where the validators accept plausible code
+> the tests reject, which is exactly why the executable suite, not the vote, is
 > the final guarantee of correctness.
 
-Table 10 (REAL DEFECTS4J OUTCOMES) — replace rows with:
+Table 10 (REAL DEFECTS4J OUTCOMES), replace rows with:
 - commons-math: full-suite-verified repairs (Math-3, Math-5) = 2
 - commons-math: consensus-approved but full-suite-failed = 7
 - commons-lang: full-suite-verified repairs = 0
@@ -277,7 +277,7 @@ Table 10 (REAL DEFECTS4J OUTCOMES) — replace rows with:
 (Drop the OLD "Lang-4, 11, 21, 28" and "6/6 self-contained Java set" claims
 entirely.)
 
-### Statistics block — §5.7, §6.3, Figure 2 caption, contributions
+### Statistics block, §5.7, §6.3, Figure 2 caption, contributions
 Everywhere McNemar p ≈ 0.002 / "10 discordant pairs all favour BFT-MAS" appears,
 replace with the honest directional result:
 - §6.3: "On the 50-bug real-world subset the safety-violation rate fell from 66%
@@ -293,12 +293,12 @@ replace with the honest directional result:
   0.002", "α = 0.01", "95% CI ≈ 4.6 to 17.6".
 
 ### Figure swaps (already regenerated; system python313 has matplotlib)
-- corrected_fig1.png — genuine 3f+1 pipeline (4 hetero validators; healer=proposer
+- corrected_fig1.png, genuine 3f+1 pipeline (4 hetero validators; healer=proposer
   no vote; analyzer no vote; quorum 3-of-4). REPLACES image1.png.
-- corrected_fig2.png — safety 66→54%, honest p=0.146 in title. REPLACES image2.png.
-- corrected_fig4.png — durations (single vs 3f+1). REPLACES image4.png.
-- corrected_fig5.png — f=1 Byzantine matrix, genuine-3f+1 title. REPLACES image5.png.
-- corrected_fig6.png — NEW f=2 tight-bound vote cliff 7/5/4 vs quorum=5. ADD.
+- corrected_fig2.png, safety 66→54%, honest p=0.146 in title. REPLACES image2.png.
+- corrected_fig4.png, durations (single vs 3f+1). REPLACES image4.png.
+- corrected_fig5.png, f=1 Byzantine matrix, genuine-3f+1 title. REPLACES image5.png.
+- corrected_fig6.png, NEW f=2 tight-bound vote cliff 7/5/4 vs quorum=5. ADD.
 
 ---
 
@@ -333,7 +333,7 @@ forward-looking, no mea-culpa. Specifically:
 1. Fill [PENDING RERUN] numbers (synthetic consensus, variance, latency) from the
    fresh r2_syn_hetero / r2_var_* / r2_lat_* summaries.
 2. Rebuild figures if any depend on the new numbers (fig2 safety uses BugsInPy;
-   fig4 durations; fig6 f=2 — check which need regen). Run with system python313.
+   fig4 durations; fig6 f=2, check which need regen). Run with system python313.
 3. Apply the section rewrites above into `revise_manuscript.py` (consolidate the
    duplicated abstract/§6.6/RQ1 edits; delete the OLD-narrative re-edits).
 4. Run `python revise_manuscript.py` → regenerates MS_R1_baseline_anon.docx +
