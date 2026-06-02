@@ -500,10 +500,12 @@ lat_body = (
     "proposal-to-decision latency rose from 53.3 s at n = 4 to 71.3 s at n = 7 and 80.1 s "
     "at n = 10, and the 99th percentile grew faster, from 59.6 s to 78.0 s to 168.6 s, "
     "because each added validator is another concurrent CPU-bound Ollama call and the "
-    "round waits for the slowest. Safety violations stayed at zero and success at 100% "
-    "throughout (Table 11), so larger populations buy tolerance to more Byzantine "
-    "validators at a latency cost and no safety gain, consistent with the n = 4 optimum of "
-    "Section 6.8. The PBFT protocol itself stays under 2 ms per round; the growth is "
+    "round waits for the slowest. This five-bug subset is sized to measure latency, not "
+    "repair quality: it is far too small to distinguish, say, 90% from 100% success, so we "
+    "draw no success or safety conclusion from it. The cost-benefit case for n = 4 — that "
+    "n = 7 lowers success with no safety gain — rests on the 30-bug comparison of Section "
+    "6.8, not on this sweep. The PBFT protocol itself stays under 2 ms per round; the growth "
+    "is "
     "validator inference, not consensus. Latency under the five Byzantine scenarios was "
     "comparable to the fault-free case, because the quorum still forms from the honest "
     "agents and the round does not wait on the corrupted one; continuous-fault recovery "
@@ -519,11 +521,10 @@ last = paras_after_element(t10._tbl, cap10, [
     ("CONSENSUS LATENCY VERSUS AGENT COUNT (E-COMMERCE, 5 BUGS)", None),
 ])
 t11 = add_table_after(d, last,
-    ["Configuration", "Independent validators", "p50 latency", "p99 latency",
-     "Success rate", "Safety violations"],
-    [["n = 4 (f = 1)", 4, "53.3 s", "59.6 s", "100%", 0],
-     ["n = 7 (f = 2)", 7, "71.3 s", "78.0 s", "100%", 0],
-     ["n = 10 (f = 3)", 10, "80.1 s", "168.6 s", "100%", 0]])
+    ["Configuration", "Independent validators", "p50 latency", "p99 latency"],
+    [["n = 4 (f = 1)", 4, "53.3 s", "59.6 s"],
+     ["n = 7 (f = 2)", 7, "71.3 s", "78.0 s"],
+     ["n = 10 (f = 3)", 10, "80.1 s", "168.6 s"]])
 
 # --- 6.13 f = 2 Byzantine tolerance + tight bound (genuine 3f+1, n = 7, quorum = 5) ---
 f2_body = (
@@ -755,10 +756,15 @@ insert_after(ins, [
       "such as financial settlement or medical-device firmware."), None),
 ])
 set_text(find_para(d, "The only deferred ingredient is the semantic-equivalence quorum"),
-    ("All four design ingredients are implemented and evaluated, with the semantic-"
-     "equivalence quorum realised behaviourally and measured (Section 6.9). The remaining "
-     "work is a formal version of that relation, continuous-fault recovery, and broader "
-     "Java coverage, all concrete extensions of a working prototype."))
+    ("All four design ingredients are implemented, and two are evaluated: the semantic-"
+     "equivalence quorum is realised behaviourally and measured (Section 6.9), and the "
+     "Byzantine fault tolerance of the consensus layer is demonstrated directly under an "
+     "equivocating primary (Section 6.14). The other two are implemented but not evaluated "
+     "here — reputation-weighted voting and the knowledge-graph learning layer — and the "
+     "e-commerce invariant checks showed no measurable effect on the tractable suites. The "
+     "remaining work is a formal version of the equivalence relation, view-change and "
+     "continuous-fault recovery, distributed multi-host deployment, and broader Java "
+     "coverage, all concrete extensions of a working prototype."))
 
 # --- References: add Dietterich (2000) and Wang et al. (2023); flag the XAI ref
 insert_after(find_para(d, "Clement, A., Wong, E., Alvisi"), [
@@ -1070,8 +1076,9 @@ set_text(find_para(d, "Figure 5. Byzantine fault-injection results"),
      "tolerates the corrupted validator, the three honest validators forming the quorum in "
      "every behaviour (in nine of ten cases under timeout, where one crashed-node case did "
      "not complete); liveness holds under always-reject and timeout and safety under "
-     "always-approve and random, with malformed output treated as a reject. This is genuine "
-     "3f + 1 Byzantine fault tolerance evaluated in a single-process simulation; the sandbox "
+     "always-approve and random, with malformed output treated as a reject. These runs show "
+     "the quorum masking a corrupted validator's vote, not the defining Byzantine case of an "
+     "equivocating primary, which is demonstrated in Figure 7 and Section 6.14; the sandbox "
      "(right bars) catches the few plausible-but-wrong fixes the validators admit, giving "
      "defence in depth."))
 # (2) Table 3 O2c: two projects, not four; and table-cell leftovers (Table 1
@@ -1091,19 +1098,26 @@ for _t in d.tables:
                 _c.text = _c.text.replace(
                     "; the corpus has been expanded between Phase 4 and Phase 5 of this "
                     "work as scope allowed", "")
-            # O1 acceptance-criteria cell: replace OLD 90-paired aggregate with the
-            # genuine-3f+1 BFT framing + honest directional repair/safety numbers.
+            # O1 acceptance-criteria cell: vote-masking is secondary (6.6), the genuine
+            # Byzantine property is the equivocating-primary demonstration (6.14).
             if _c.text.startswith("Met on the safety axis") and "90 paired bugs" in _c.text:
                 _c.text = (
-                    "Met on the safety axis through genuine Byzantine fault tolerance: with "
-                    "four independent, model-diverse validators (f = 1, quorum 3 of 4) the "
-                    "system tolerates one corrupted voter across all five fault behaviours, "
-                    "and an f = 2 study (n = 7, quorum 5) confirms the tolerance bound is "
-                    "exact. On the BugsInPy subset the safety-violation rate fell "
-                    "directionally from 75% to 50% and the repair rate rose from 25% to 50% "
-                    "(neither significant at this sample size); the executable sandbox ensures no "
-                    "consensus-approved fix is committed unless it passes, so the pipeline "
-                    "never commits a wrong fix.")
+                    "Met on the safety axis: with four independent, model-diverse validators "
+                    "(f = 1, quorum 3 of 4) the quorum masks a corrupted validator's vote "
+                    "across all five fault behaviours (Section 6.6), and the defining "
+                    "Byzantine property — agreement under an equivocating primary — is "
+                    "demonstrated in Section 6.14. On the BugsInPy subset the safety-violation "
+                    "rate fell directionally from 75% to 50% and the repair rate rose from "
+                    "25% to 50% (neither significant at this sample size); the executable "
+                    "sandbox ensures no consensus-approved fix is committed unless it passes.")
+            # O3 cell: consensus formation is 90% under timeout, not 100% everywhere.
+            if "consensus-success rate of 100% across all scenarios" in _c.text:
+                _c.text = (
+                    "Five Byzantine fault scenarios injected (Section 6.6): consensus formed "
+                    "at 100% in four of five scenarios and 90% under timeout (Table 6, "
+                    "Figure 5). The defining Byzantine property — agreement under an "
+                    "equivocating primary — is demonstrated in the protocol simulation of "
+                    "Section 6.14. A live deployment study is deferred to follow-up work.")
 # (10) §7.4 RQ4: hedge $1M/hr to CISQ (2022); $0.12 -> a few dollars; mark exploratory
 set_text(find_para(d, "RQ4. What economic benefit can e-commerce"),
     ("RQ4 (exploratory). What economic benefit can e-commerce businesses derive from "
@@ -1227,18 +1241,19 @@ set_text(find_para(d, "There is also a clear cost story: consensus is roughly"),
      "not be. The synthetic benchmark, perfect in both modes, is a sanity check."))
 set_text(find_para(d, "RQ2. How does consensus latency affect real-time repair?"),
     ("RQ2. How does consensus latency affect real-time repair? The protocol adds under 2 ms "
-     "per round; the added latency — on e-commerce, about 53 s mean against 18 s for the "
-     "baseline — comes from LLM I/O and Ollama inference, not consensus. This roughly "
-     "threefold increase is the cost of the extra validators, and trading tens of seconds for "
-     "fewer unsafe fixes is defensible for high-stakes commits."))
+     "per round; the added latency is LLM I/O and Ollama inference, not consensus, and "
+     "averages about three times the baseline, largest on BugsInPy (Section 6.5 and Table 4; "
+     "how latency scales with the validator count is in Section 6.12 and Table 11). Trading "
+     "tens of seconds for fewer unsafe fixes is defensible for high-stakes commits."))
 
 # Per-dataset latency summary: align BugsInPy to the real r2_bip numbers (160.5 s vs
 # 41.4 s), correct the average slowdown, the "two run" fossil, and the now-reversed
 # "gap narrows on BugsInPy" claim (the gap is widest there).
 set_text(find_para(d, "Consensus is about 2.0× slower than the baseline on average"),
-    ("Consensus is about three times slower than the baseline on average (p50: synthetic "
-     "44.5 s vs 14.6 s, BugsInPy 160.5 s vs 41.4 s, e-commerce 50.7 s vs 18.4 s), dominated "
-     "by the validator stage, since each CPU-bound Ollama validator takes 30 to 40 s and they "
+    ("Consensus is about three times slower than the baseline on average (mean latency: "
+     "synthetic 44.5 s vs 14.6 s, BugsInPy 155.6 s vs 39.9 s, e-commerce 50.7 s vs 18.4 s), "
+     "dominated by the validator stage, since each CPU-bound Ollama validator takes 30 to 40 "
+     "s and they "
      "run concurrently. The protocol itself adds under 2 ms per round; the gap is widest on "
      "BugsInPy, where hard real bugs drive repeated repair attempts, each paying the full "
      "validator round (Figure 4)."))
@@ -1373,10 +1388,10 @@ for _t in d.tables:
 # update the BugsInPy rows to the genuine-3f+1 R2 runs, and recompute the Overall row.
 # Columns: [Dataset, Mode, Success, Safety-viol, Mean latency ms, p99 ms, Ground-truth].
 _perds = {
-    ("BugsInPy (n=20)", "BFT-MAS consensus"):      ("0.500", "0.500", "160,458", "222,719", "0.667"),
-    ("BugsInPy (n=20)", "Single-agent baseline"):  ("0.250", "0.750", "41,440",  "61,071",  "0.571"),
-    ("Overall (90 paired cases)", "BFT-MAS consensus"):     ("0.889", "0.111", "72,300", "222,700", "0.889"),
-    ("Overall (90 paired cases)", "Single-agent baseline"): ("0.833", "0.167", "21,800", "61,100",  "0.833"),
+    ("BugsInPy (n=20)", "BFT-MAS consensus"):      ("0.500", "0.500", "155,600", "222,719", "0.667"),
+    ("BugsInPy (n=20)", "Single-agent baseline"):  ("0.250", "0.750", "39,900",  "61,071",  "0.571"),
+    ("Overall (90 paired cases)", "BFT-MAS consensus"):     ("0.889", "0.111", "71,300", "222,700", "0.889"),
+    ("Overall (90 paired cases)", "Single-agent baseline"): ("0.833", "0.167", "21,500", "61,100",  "0.833"),
 }
 for _t in d.tables:
     if _hdr(_t)[:2] == ["Dataset (n paired)", "Mode"]:
