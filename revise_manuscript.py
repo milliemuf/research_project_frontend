@@ -201,54 +201,42 @@ d = docx.Document(REVISED)
 
 # --- Abstract: restructured (problem -> aim -> method -> findings -> meaning -> next)
 set_text(find_para(d, "Abstract:"),
-    ("Automated program repair with large language models (LLMs) has a safety gap: a "
-     "single model often returns a confident but wrong fix that breaks working code. In "
-     "e-commerce this can mean double charges, negative stock, or broken refunds. We ask "
-     "whether genuine Byzantine fault-tolerant (BFT) consensus over a population of "
-     "independent LLM agents can remove these unsafe fixes while keeping repair ability. "
-     "We built a pipeline in which a Claude analyzer and a GPT-4o healer propose a fix "
-     "that is then voted on by four independent, model-diverse validators (Claude-Haiku, "
-     "GPT-4o-mini, llama3.1:8b, mistral:7b) under Practical Byzantine Fault Tolerance "
-     "(PBFT; n = 3f + 1 = 4, quorum = 3), with every approved fix run in a sandbox. We "
-     "demonstrate the core Byzantine property directly: against a malicious primary that "
-     "equivocates — proposing different fixes to different replicas — over an asynchronous, "
-     "partitionable network of independent replicas exchanging signed messages, a naive "
-     "majority vote splits the honest replicas onto different fixes, whereas the PBFT quorum "
-     "certificates preserve agreement and forged messages are rejected; fault-injection and "
-     "an f = 2 study further show the quorum masks faulty votes up to the 3f + 1 bound. The "
-     "program-repair results are preliminary: on a 20-bug real-world subset consensus "
-     "directionally reduced the safety-violation rate (75% to 50%) and raised the repair rate "
-     "(25% to 50%), but neither reaches significance (McNemar exact p = 0.125) and the effect "
-     "rests on a weak run-as-script oracle. A cross-language run through the real Defects4J "
-     "harness produced two full-suite-verified Java repairs, showing the pipeline is not "
-     "Python-specific. We "
-     "also test the agreement rule itself: across heterogeneous proposers a byte-identical "
-     "quorum almost never forms (2.5-10%), whereas a semantic-equivalence quorum that "
-     "compares behaviour forms for 70-77% of bugs, which is what makes consensus workable "
-     "for non-deterministic agents. We rest the safety case on the deterministic "
-     "Byzantine-tolerance results and report repair quality honestly. Future work targets "
-     "a formal semantic-equivalence relation, distributed deployment with network faults, "
-     "and broader Java coverage."),
+    ("Automated program repair with large language models (LLMs) has a safety gap: a single "
+     "model often returns a confident but wrong fix that breaks working code — in e-commerce, "
+     "double charges, negative stock or broken refunds. We ask whether genuine Byzantine "
+     "fault-tolerant (BFT) consensus over independent LLM agents can remove unsafe fixes "
+     "while keeping repair ability. A Claude analyzer and a GPT-4o healer propose a fix that "
+     "four independent, model-diverse validators (Claude-Haiku, GPT-4o-mini, llama3.1:8b, "
+     "mistral:7b) then vote on under PBFT (n = 3f + 1 = 4, quorum = 3), with every approved "
+     "fix run in a sandbox. We demonstrate the core Byzantine property directly: against a "
+     "malicious primary that equivocates over an asynchronous, partitionable network of "
+     "signed-message replicas, a naive vote splits the honest replicas onto different fixes "
+     "while the PBFT quorum certificates preserve agreement and reject forged messages. "
+     "Repair results are preliminary: on a 20-bug real-world subset consensus directionally "
+     "cut the safety-violation rate (75% to 50%) and raised repair (25% to 50%), but neither "
+     "is significant (McNemar p = 0.125) and the effect rests on a weak oracle. A real "
+     "Defects4J run yielded two full-suite-verified Java repairs. We also find that a "
+     "byte-identical quorum almost never forms across heterogeneous proposers (2.5-10%), "
+     "whereas a semantic-equivalence quorum forms for 70-77%, which is what makes consensus "
+     "workable for non-deterministic agents. Future work targets a formal equivalence "
+     "relation, distributed deployment, and broader Java coverage."),
     bold_lead="Abstract: ")
 
 # --- Intro hook (prepend a concrete scenario to paragraph 1)
 p = find_para(d, "Two fast-moving research areas have barely intersected.")
 set_text(p,
-    ("Picture an online store that repairs its own code at runtime. A single LLM proposes "
-     "a fix for a payment bug; the fix looks right, passes a quick glance, and is shipped. "
-     "Under load it applies each refund twice, and the loss runs into real money before "
-     "anyone notices. The failure is not that the model could not code, but that nothing "
-     "independent checked it before it went live. This is the problem we attack. "
-     "Two fast-moving research areas have barely intersected. BFT consensus, from Lamport, "
-     "Shostak and Pease (1982) to the practical PBFT of Castro and Liskov (1999), keeps "
-     "protocols safe when participants misbehave, but only if they are deterministic. The "
-     "multi-agent LLM literature, such as ChatDev (Qian et al., 2024), MetaGPT (Hong et "
-     "al., 2024) and AutoGen (Wu et al., 2024), organises stochastic agents into teams "
-     "coordinated by conversation, not formal agreement. Read together (Section 2.4, "
-     "Table 1) they expose five gaps, summarised in Table 1: no LLM-agent framework runs "
-     "formal consensus; none adapts BFT to non-deterministic agents; no empirical safety "
-     "evaluation exists; the e-commerce domain is untouched; and agent-diversity "
-     "decorrelation is unmeasured."))
+    ("Picture an online store that repairs its own code at runtime. A single LLM proposes a "
+     "fix for a payment bug; it looks right, ships, and then under load applies each refund "
+     "twice — real money lost before anyone notices. The failure is not that the model could "
+     "not code, but that nothing independent checked it. Two fast-moving research areas have "
+     "barely intersected. BFT consensus, from Lamport, Shostak and Pease (1982) to PBFT "
+     "(Castro and Liskov, 1999), keeps protocols safe when participants misbehave, but "
+     "assumes determinism; the multi-agent LLM literature (ChatDev, Qian et al., 2024; "
+     "MetaGPT, Hong et al., 2024; AutoGen, Wu et al., 2024) organises stochastic agents by "
+     "conversation, not formal agreement. Read together (Section 2.4, Table 1) they expose "
+     "five gaps: no LLM-agent framework runs formal consensus; none adapts BFT to non-"
+     "deterministic agents; no empirical safety evaluation exists; the e-commerce domain is "
+     "untouched; and agent-diversity decorrelation is unmeasured."))
 
 # --- Intro para 2: reflect that the quorum is now implemented and compared
 set_text(find_para(d, "We respond with BFT-MAS, which has four parts"),
@@ -317,23 +305,18 @@ set_text(find_para(d, "The consensus engine runs PBFT with f = 1"),
      "to future work (Section 8.2)."))
 # Insert an explicit threat-model / scope paragraph right after 3.2.
 insert_after(find_para(d, "The consensus engine runs PBFT with f = 1"), [
-    (("Threat model and scope. The system is evaluated in two complementary harnesses, and "
-      "the threat model differs between them. The LLM safety pipeline (Sections 6.1 to 6.13) "
-      "runs all four validator replicas as asynchronous tasks inside one trusted Python "
-      "process: there is no real network and no message-tampering or Sybil adversary, the "
-      "only injected fault is a Byzantine validator that votes maliciously (a wrapper forcing "
-      "always-reject, always-approve, random, timeout or garbage behaviour, Section 5.5), and "
-      "the message signatures there (a lightweight HMAC) protect integrity by construction "
-      "rather than "
-      "against a live attacker. In that harness the quorum simply masks one faulty vote, "
-      "which is why the protocol adds under 2 ms: there is no distributed coordination to pay "
-      "for. The genuinely Byzantine setting — independent replicas exchanging signed messages "
-      "over a network that can delay, drop and partition them, against a primary that "
-      "equivocates and nodes that attempt to forge messages — is evaluated separately in the "
-      "deterministic protocol simulation of Section 6.14, where signatures are verified on "
-      "receipt and forged messages are rejected. What remains out of scope in both harnesses "
-      "is a multi-host deployment and view-change under primary failure; hardening the "
-      "protocol for distributed operation is the natural next step (Section 8)."), None),
+    (("Threat model and scope. The system is evaluated in two harnesses with different threat "
+      "models. The LLM safety pipeline (Sections 6.1 to 6.13) runs all four validators as "
+      "asynchronous tasks in one trusted process: no real network, no message-tampering or "
+      "Sybil adversary, the only injected fault a Byzantine validator that votes maliciously "
+      "(Section 5.5), and the message signatures there (a lightweight HMAC) protect integrity "
+      "by construction, not against a live attacker — the quorum simply masks one faulty vote, "
+      "which is why the protocol adds under 2 ms. The genuinely Byzantine setting — "
+      "independent replicas exchanging signed messages over a network that can delay, drop "
+      "and partition them, against a primary that equivocates and nodes that forge messages — "
+      "is evaluated separately in the deterministic simulation of Section 6.14, where "
+      "signatures are verified and forged messages rejected. Out of scope in both is "
+      "multi-host deployment and view-change under primary failure (Section 8)."), None),
 ])
 
 # --- 6.6: state precisely who is corrupted and how the quorum forms (genuine 3f+1)
@@ -1030,18 +1013,15 @@ set_text(find_para(d, "F1 score on the synthetic set"),
      "similarity to the diff-extracted canonical hunk."))
 # 7.5 economics: consistent per-100-repairs base (fixes the time-base error)
 set_text(find_para(d, "For an e-commerce team the practical gain"),
-    ("For an e-commerce team the practical gain is fewer false-positive fixes, a directional "
-     "reduction of about 6 percentage points across the full corpus (16.7% to 11.1%, and 75% "
-     "to 50% on the hardest real-world subset), and, more importantly, a guarantee that no "
-     "consensus-approved fix is applied until it clears an executable sandbox and that the "
-     "consensus itself tolerates up to f Byzantine validators. Per 100 high-stakes repairs a "
-     "6-point reduction is about 6 averted incidents; at a commonly cited cost near US$1 "
-     "million per hour of critical downtime and a 30-minute recovery, on the order of US$3 "
-     "million in avoided loss per 100 repairs, against an API cost of a few dollars each "
-     "(consistent with Section 7.4). The broader "
-     "point is trust: systems that occasionally commit unsafe changes erode confidence in "
-     "AI-assisted infrastructure, and auditable, fault-tolerant automation in payment, "
-     "inventory and refund systems is a step toward addressing that."))
+    ("For an e-commerce team the practical gain is fewer false-positive fixes — a directional "
+     "reduction of about 6 percentage points across the corpus (16.7% to 11.1%) — and, more "
+     "importantly, a guarantee that no consensus-approved fix is applied until it clears an "
+     "executable sandbox, with consensus that tolerates up to f Byzantine validators. As an "
+     "order-of-magnitude estimate, per 100 high-stakes repairs that is roughly 6 averted "
+     "incidents, worth on the order of US$3 million at commonly cited downtime costs against "
+     "an API cost of a few dollars each (Section 7.4). The broader point is trust: auditable, "
+     "fault-tolerant automation in payment, inventory and refund systems is a step toward the "
+     "confidence such infrastructure needs."))
 # Table 2: reconcile the BFT-MAS row with the rest of the paper
 for _t in d.tables:
     hdr = [c.text.strip() for c in _t.rows[0].cells]
@@ -1121,14 +1101,11 @@ for _t in d.tables:
 # (10) §7.4 RQ4: hedge $1M/hr to CISQ (2022); $0.12 -> a few dollars; mark exploratory
 set_text(find_para(d, "RQ4. What economic benefit can e-commerce"),
     ("RQ4 (exploratory). What economic benefit can e-commerce businesses derive from "
-     "reduced downtime? Industry reports place the cost of critical software downtime in "
-     "the range of hundreds of thousands to over a million US dollars per hour (CISQ, "
-     "2022). Taking an illustrative US$1 million per hour and a 30-minute recovery, the "
-     "directional reduction in unsafe fixes (about 6 percentage points across the corpus, "
-     "16.7% to 11.1%) would avoid on the order of US$3 million per 100 high-stakes repairs, "
-     "against an API cost of a few dollars each. We treat this as an order-of-magnitude "
-     "estimate, not a measured "
-     "outcome; a live-deployment economic study (objective O3) is future work."))
+     "reduced downtime? Industry reports place critical-downtime cost in the hundreds of "
+     "thousands to over a million US dollars per hour (CISQ, 2022); Section 7.5 develops an "
+     "order-of-magnitude estimate from our directional safety reduction. We treat it as "
+     "indicative, not a measured outcome; a live-deployment economic study (objective O3) is "
+     "future work."))
 # (6) Blanchard year 2018 -> 2017 (in-text + reference); Copilot row -> Codex; Abraham spacing
 replace_in_para(d, "Gap 5: Agent-diversity", "Blanchard et al., 2018", "Blanchard et al., 2017")
 for _t in d.tables:

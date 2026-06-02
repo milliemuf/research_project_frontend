@@ -27,7 +27,7 @@ _Re-verified 2026-06-02 against the current documents._
 - Corrected BugsInPy projects (PySnooper + ansible); Dietterich (2000), Wang et al. (2023) and the smart-contract XAI reference (Maturi et al., 2025) added.
 - Anonymised (names/emails/affiliation/repo handles removed) and confidentiality watermark stripped — **verified clean**.
 - Consistency pass resolved 8 referee contradictions (threat-model scope; vote-masking vs genuine BFT; validator-count fossils; O3 "100% across all scenarios"; Conclusion "all four evaluated"; Figure 5 caption; latency reconciliation; n = 7 success on the 5-bug sweep).
-- Word count: **~10,840 main-text words incl. tables (excl. refs/abstract); limit 11,000 — close, trim if you add anything.**
+- Word count: **10,884 words excluding references (Word count, incl. abstract + tables); limit 11,000 — under, with a small margin, after trimming the abstract, intro hook, RQ4 and the threat-model paragraph.** A standalone `Technical_Paper_for_Supervisor.pdf` (title + author names + full paper, no letter/supplementary) is also generated at 10,906 words excl. references.
 
 ## OPEN ITEMS for the authors (must do before upload)
 1. **ORCID iDs** — replace `[ADD-ORCID]` on the title page (still present).
