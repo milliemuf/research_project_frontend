@@ -38,17 +38,32 @@ def set_text(p, text):
     p.add_run(text)
 
 
+from docx.oxml import OxmlElement
+
+
 def insert_paras_before(anchor, items):
-    """Insert (text, style) paragraphs before `anchor` (a Paragraph)."""
+    """Insert (text, style) paragraphs before `anchor` as CLEAN paragraphs
+    (body text -> Normal style; headings -> the named style). Building fresh
+    elements avoids inheriting the anchor's heading formatting."""
     for text, style in items:
-        new_p = copy.deepcopy(anchor._p)
+        new_p = OxmlElement("w:p")
         anchor._p.addprevious(new_p)
         np = Paragraph(new_p, anchor._parent)
-        for r in list(np.runs):
-            r._element.getparent().remove(r._element)
-        if style:
-            np.style = d.styles[style]
+        np.style = d.styles[style] if style else d.styles["Normal"]
         np.add_run(text)
+
+
+def insert_table_before(anchor, header, rows):
+    """Insert a real Word table (Table Grid) immediately before `anchor`."""
+    t = d.add_table(rows=1, cols=len(header)); t.style = "TableGrid"
+    for j, h in enumerate(header):
+        c = t.rows[0].cells[j]; c.text = ""; c.paragraphs[0].add_run(h).bold = True
+    for row in rows:
+        cells = t.add_row().cells
+        for j, v in enumerate(row):
+            cells[j].text = str(v)
+    anchor._p.addprevious(t._tbl)
+    return t
 
 
 def _code_lines(path, max_lines=None):
@@ -395,15 +410,18 @@ insert_paras_before(anchor, [
       "question of Sections 4.4.1 to 4.4.2."), None),
     ("Table 4.6. Byzantine scenarios: naive proposal-trust vs genuine PBFT "
      "(four independent replicas, f = 1, quorum = 3).", None),
-    ("Scenario | Naive proposal-trust | Genuine PBFT", None),
-    ("Honest primary, no faults | agreed + progress | agreed + progress", None),
-    ("f = 1 replica crashed | agreed + progress | agreed + progress", None),
-    ("f + 1 = 2 replicas crashed | progresses (uncertified) | safe, no progress", None),
-    ("Validator sends conflicting votes | agreed + progress | agreed + progress", None),
-    ("Validator forges others' messages | agreed (forgeries rejected) | agreed (forgeries rejected)", None),
-    ("Network partition (no heal) | progresses (uncertified) | safe, no progress", None),
-    ("Network partition, then healed | agreed + progress | agreed + progress", None),
-    ("Malicious primary EQUIVOCATES | SPLIT-BRAIN (safety violated) | safe (no split); awaits view-change", None),
+])
+insert_table_before(anchor,
+    ["Scenario", "Naive proposal-trust", "Genuine PBFT"],
+    [["Honest primary, no faults", "agreed + progress", "agreed + progress"],
+     ["f = 1 replica crashed", "agreed + progress", "agreed + progress"],
+     ["f + 1 = 2 replicas crashed", "progresses (uncertified)", "safe, no progress"],
+     ["Validator sends conflicting votes", "agreed + progress", "agreed + progress"],
+     ["Validator forges others' messages", "agreed (forgeries rejected)", "agreed (forgeries rejected)"],
+     ["Network partition (no heal)", "progresses (uncertified)", "safe, no progress"],
+     ["Network partition, then healed", "agreed + progress", "agreed + progress"],
+     ["Malicious primary EQUIVOCATES", "SPLIT-BRAIN (safety violated)", "safe (no split); awaits view-change"]])
+insert_paras_before(anchor, [
     ("4.4.9 Cross-Language Evaluation on Java (Defects4J)", "Heading 31"),
     (("To test that the pipeline is not Python-specific, and to evaluate it against a real "
       "test oracle rather than the run-as-script proxy used on BugsInPy, the four-validator "
@@ -453,9 +471,13 @@ new_refs = [
 ]
 # insert after the REFERENCES heading (alphabetical-ish: just append at end of section)
 anchorA = None
-for i, p in enumerate(d.paragraphs):
-    if p.text.strip().startswith("APPENDIX A"):
+for p in d.paragraphs:  # the REAL heading (Heading 1), not the table-of-contents entry
+    if p.text.strip().startswith("APPENDIX A") and p.style.name == "Heading 1":
         anchorA = p; break
+if anchorA is None:
+    for p in d.paragraphs:
+        if p.text.strip().startswith("APPENDIX A"):
+            anchorA = p
 added = 0
 for text, key in new_refs:
     if key not in existing:
