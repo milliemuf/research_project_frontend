@@ -51,16 +51,33 @@ def insert_paras_before(anchor, items):
         np.add_run(text)
 
 
-def add_code_listing(title, path):
-    """Append a code-listing subsection (Heading 3 + monospace body) at doc end."""
-    h = d.add_paragraph(); h.style = d.styles["Heading 31"]; h.add_run(title)
-    code = open(path, encoding="utf-8").read().replace("\t", "    ")
+def _code_lines(path, max_lines=None):
+    lines = open(path, encoding="utf-8").read().replace("\t", "    ").split("\n")
+    if max_lines and len(lines) > max_lines:
+        total = len(lines)
+        lines = lines[:max_lines] + [
+            "", f"    # ... [{total - max_lines} further lines omitted for brevity; "
+                f"full {total}-line source in the released code repository]"]
+    return lines
+
+
+def _write_code(lines):
+    from docx.shared import Pt as _Pt
     p = d.add_paragraph()
-    for i, line in enumerate(code.split("\n")):
+    pf = p.paragraph_format
+    pf.space_before = _Pt(0); pf.space_after = _Pt(0); pf.line_spacing = 1.0
+    for i, line in enumerate(lines):
         if i:
             p.add_run().add_break()
         r = p.add_run(line if line else " ")
-        r.font.name = "Consolas"; r.font.size = Pt(8)
+        r.font.name = "Consolas"; r.font.size = _Pt(7.5)
+    return p
+
+
+def add_code_listing(title, path, max_lines=None):
+    """Append a code-listing subsection (Heading 3 + monospace body) at doc end."""
+    h = d.add_paragraph(); h.style = d.styles["Heading 31"]; h.add_run(title)
+    _write_code(_code_lines(path, max_lines))
 
 
 # ---------------------------------------------------------------- 1. fossil flips
@@ -416,7 +433,7 @@ add_code_listing("G.10 Byzantine Proof Experiments (benchmarks/bft_demo.py)",
 add_code_listing("G.11 BFT Property Tests (tests/test_bft_sim.py)",
                  os.path.join(BACKEND, "tests", "test_bft_sim.py"))
 add_code_listing("G.12 Real Defects4J (Java) Runner (benchmarks/defects4j_runner.py)",
-                 os.path.join(BACKEND, "benchmarks", "defects4j_runner.py"))
+                 os.path.join(BACKEND, "benchmarks", "defects4j_runner.py"), max_lines=370)
 d.save(DST)
 print("code listings G.9-G.11 appended")
 
@@ -490,7 +507,7 @@ d.save(DST)
 print("Appendix F per-case tables rebuilt (BugsInPy + Byzantine)")
 
 # ---------------------------------------------------------------- 6. refresh G.1-G.8
-def refresh_listing(prefix, filepath):
+def refresh_listing(prefix, filepath, max_lines=None):
     hp = None
     for p in d.paragraphs:
         if p.text.strip().startswith(prefix):
@@ -510,14 +527,8 @@ def refresh_listing(prefix, filepath):
         elif el.tag == qn("w:tbl"):
             break
         el = nxt
-    # build new code paragraph and move it to just after the heading
-    code = open(filepath, encoding="utf-8").read().replace("\t", "    ")
-    p = d.add_paragraph()
-    for i, line in enumerate(code.split("\n")):
-        if i:
-            p.add_run().add_break()
-        r = p.add_run(line if line else " ")
-        r.font.name = "Consolas"; r.font.size = Pt(8)
+    # build new (tight, optionally truncated) code paragraph after the heading
+    p = _write_code(_code_lines(filepath, max_lines))
     hp._p.addnext(p._p)
 
 
@@ -531,7 +542,7 @@ for _pfx, _fp in [
     ("G.7 Single-Agent Baseline Pipeline", "app/repair/single_agent_pipeline.py"),
     ("G.8 Isolated Sandbox Executor", "app/sandbox/docker_executor.py"),
 ]:
-    refresh_listing(_pfx, os.path.join(BACKEND, _fp))
+    refresh_listing(_pfx, os.path.join(BACKEND, _fp), max_lines=370)
 d.save(DST)
 print("G.1-G.8 listings refreshed to current code")
 print("WROTE", DST)
