@@ -1,0 +1,253 @@
+# -*- coding: utf-8 -*-
+"""Chapter 1 and 2 expansion prose (no em-dashes)."""
+
+SECTIONS = [
+("1.2 Background", [
+ "The reliability problem that motivates this study has shifted in character over the "
+ "past decade. Early web services failed in ways that were largely deterministic and "
+ "observable: a null reference, an unhandled exception, a database connection that timed "
+ "out. Such faults are reproducible, and a single competent engineer with a stack trace "
+ "can usually localise and correct them. The systems that now dominate e-commerce are "
+ "different. They are distributed across many services, they embed machine-learned "
+ "components whose behaviour is statistical rather than specified, and they are exposed to "
+ "adversarial traffic that actively probes for weaknesses. In this setting a fault is no "
+ "longer a single broken line of code; it is an emergent property of the interaction "
+ "between components, data and load. The cost of leaving such faults unaddressed is also "
+ "higher, because a checkout path that is unavailable for minutes translates directly into "
+ "lost revenue and eroded customer trust.",
+ "A natural response has been to automate repair. Automated program repair (APR) has "
+ "matured from a research curiosity into a body of techniques that can, under the right "
+ "conditions, generate and validate patches without human intervention. The arrival of "
+ "large language models (LLMs) has accelerated this trend, because an LLM can read a "
+ "failing test, reason about the surrounding code in natural language, and propose an edit "
+ "that is frequently plausible. The difficulty is that plausibility is not correctness. An "
+ "LLM is a stochastic generator; the same prompt can yield a sound fix on one sampling and "
+ "a regression on the next. When the artefact being modified is a live commercial system, "
+ "the asymmetry between a good patch and a bad one is severe: a good patch restores "
+ "service, while a bad patch can corrupt orders, double-charge customers or silently "
+ "violate a business invariant. Trusting a single stochastic agent to act on production is "
+ "therefore not defensible.",
+ "This is where the distributed-systems literature offers a useful idea. The Byzantine "
+ "generals problem, posed by Lamport, Shostak and Pease, asks how a set of components can "
+ "agree on a single value when some of those components may behave arbitrarily, including "
+ "maliciously. Practical Byzantine Fault Tolerance (PBFT) gave the first efficient answer "
+ "for asynchronous systems, showing that a population of 3f + 1 replicas can tolerate up "
+ "to f faulty members and still reach agreement. The present study takes the position that "
+ "an unreliable LLM agent is, for the purposes of safety, indistinguishable from a "
+ "Byzantine replica: it may be confidently wrong, it may contradict itself across calls, "
+ "and it may, if compromised, be made to recommend something harmful. If that is true, "
+ "then the same quorum logic that protects a replicated database can protect an automated "
+ "repair pipeline, by requiring that no fix is applied unless an independent, "
+ "model-diverse quorum of validators agrees on it.",
+]),
+("1.3 Problem Statement", [
+ "The core problem this dissertation addresses can therefore be stated precisely. "
+ "Single-agent automated repair is unsafe to deploy autonomously because the agent has no "
+ "independent check on its own output, and the failure modes of a stochastic model are "
+ "exactly the failure modes that a single point of trust cannot defend against. Existing "
+ "multi-agent repair frameworks improve on this by adding reviewers or critics, but they "
+ "typically aggregate opinions through a coordinator or a simple majority of homogeneous "
+ "agents. A coordinator reintroduces a single point of trust, and a majority of agents "
+ "drawn from the same base model fails in correlated ways, so the majority can be wrong "
+ "together. Neither arrangement provides the property that the safety argument actually "
+ "requires, which is agreement that survives an adversarial or equivocating member.",
+ "The problem is thus twofold. First, there is a design gap: no published system applies "
+ "a genuine 3f + 1 Byzantine-agreement protocol, with independent model-diverse voters and "
+ "a real 2f + 1 quorum, to the decision of whether to apply a repair. Second, there is an "
+ "evidence gap: the safety claims of agentic repair systems are usually asserted rather "
+ "than demonstrated under explicit fault injection. This study sets out to close both, by "
+ "building a consensus layer that is Byzantine fault-tolerant in the technical sense and "
+ "by subjecting it to adversarial behaviour, including a primary that equivocates, so that "
+ "the safety property can be observed rather than merely claimed.",
+]),
+("1.4 Justification", [
+ "The justification for pursuing genuine Byzantine agreement, rather than a lighter "
+ "review-and-vote scheme, rests on the nature of the threat. A review step that uses the "
+ "same model family as the proposer inherits that family's blind spots. If the base model "
+ "systematically mishandles a class of edge cases, then both the proposer and the reviewer "
+ "will mishandle them, and the review provides false assurance. Model diversity, in which "
+ "the validators are drawn from different providers and architectures, is what makes the "
+ "votes statistically independent enough for a quorum to mean something. The quorum size "
+ "of 2f + 1 out of 3f + 1 is not arbitrary either; it is the smallest quorum for which any "
+ "two quorums must overlap in at least one honest member, which is precisely the condition "
+ "that prevents two conflicting fixes from both being committed.",
+ "There is also a pragmatic justification. E-commerce operators are increasingly willing "
+ "to automate remediation, but they are unwilling to grant write access to production to "
+ "any system whose safety cannot be argued from first principles. A consensus layer that "
+ "can be shown to preserve agreement under a defined fault budget gives such an operator a "
+ "concrete, auditable safety boundary: fixes below the quorum are never applied, and the "
+ "protocol is proven to make no unsafe commit even when a member misbehaves. This is a "
+ "more honest contract than a single agent's confidence score, and it is the contribution "
+ "that this study aims to make defensible through direct demonstration rather than "
+ "assertion.",
+]),
+("1.7 Scope and Significance", [
+ "The scope of the work is deliberately bounded so that the claims made can be supported "
+ "by the evidence gathered. The consensus layer is evaluated on the safety axis, which is "
+ "the property that no two honest validators commit different fixes for the same defect and "
+ "that no uncertified fix reaches the sandbox. Liveness under a failed primary, which in "
+ "classical PBFT is restored by a view-change sub-protocol, and deployment across multiple "
+ "physical hosts are identified as future work rather than evaluated here. This boundary is "
+ "stated openly because the title of the project rests on the safety guarantee, and that "
+ "guarantee is what the experiments are designed to test.",
+ "Within that boundary the significance is twofold. Methodologically, the study "
+ "contributes a reproducible harness in which a population of model-diverse LLM validators "
+ "exchanges signed pre-prepare, prepare and commit messages over a network that can drop, "
+ "delay and partition traffic, and in which adversarial member behaviour can be injected "
+ "and measured. Substantively, it contributes an honest account of what such a layer does "
+ "and does not buy: it provides a demonstrable safety boundary, while the downstream "
+ "repair-rate improvements it enables are reported as preliminary and directional rather "
+ "than as a headline result. The intention is that a later researcher can take the harness, "
+ "supply more compute, and extend the evaluation without having to rebuild the protocol.",
+]),
+
+("2.2 Conceptual Framework", [
+ "The conceptual framework that organises this review treats three literatures as "
+ "intersecting rather than separate. The first is fault tolerance in distributed systems, "
+ "which supplies the formal notion of agreement under adversarial failure. The second is "
+ "the emerging literature on multi-agent LLM systems, which supplies the components that do "
+ "the reasoning and propose the repairs. The third is automated program repair, which "
+ "supplies the task and the metrics by which success is judged. The thesis of the framework "
+ "is that each literature is individually mature but that their intersection is largely "
+ "empty: the fault-tolerance community has not treated LLM agents as replicas, the "
+ "multi-agent community has not adopted Byzantine-agreement guarantees, and the repair "
+ "community has not made safety under adversarial members a first-class evaluation target.",
+ "Reading the three literatures together also clarifies what a contribution at the "
+ "intersection must look like. It must inherit from the fault-tolerance literature a "
+ "protocol with a stated fault budget and a proven safety property, not merely a voting "
+ "heuristic. It must inherit from the multi-agent literature the practical machinery of "
+ "prompting, tool use and sandboxed execution. And it must inherit from the repair "
+ "literature a credible oracle, such as a real test suite, so that a committed fix can be "
+ "said to be correct in a sense stronger than passing a single reproduction script. The "
+ "remainder of this chapter examines each literature against these requirements and ends "
+ "by naming the specific gaps that the study addresses.",
+]),
+("2.3.1 Byzantine Fault Tolerance", [
+ "The progression from theory to practice in Byzantine fault tolerance is worth tracing "
+ "because it explains why the 3f + 1 bound is treated here as a hard design constraint "
+ "rather than a tunable parameter. Lamport, Shostak and Pease established that, for a "
+ "system to tolerate f arbitrarily-faulty components and still reach agreement, at least "
+ "3f + 1 components are required when messages are not signed; with authenticated messages "
+ "the message complexity improves but the replication bound for the asynchronous setting "
+ "remains the reference point that practitioners design to. The intuition is that the "
+ "faulty members can split their votes to manufacture disagreement, and only a population "
+ "large enough that two overlapping quorums must share an honest member can defeat that "
+ "strategy.",
+ "Castro and Liskov's PBFT made these guarantees efficient enough to run in real systems "
+ "by introducing the three-phase pre-prepare, prepare and commit exchange and a "
+ "view-change mechanism for liveness. The protocol's safety rests on quorum intersection: "
+ "a replica commits a value only after collecting 2f + 1 matching commit messages, and "
+ "because any two such quorums intersect in at least f + 1 replicas, at least one honest "
+ "replica vouches for any committed value, so two honest replicas can never commit "
+ "conflicting values for the same sequence number. Later work, including the BFT systems "
+ "that underpin permissioned blockchains, refined throughput and view-change cost but "
+ "retained this core. The present study adopts the safety half of PBFT directly, mapping "
+ "replicas to validators and sequence numbers to defect slots, and treats the liveness "
+ "half, the view-change, as out of scope and named as future work.",
+ "What the classical literature does not address is the source of the faults. In a "
+ "replicated database a Byzantine replica is usually imagined as crashed, buggy or "
+ "compromised. In an LLM repair pipeline the analogous faults are intrinsic and frequent: "
+ "a model hallucinates an API that does not exist, contradicts itself between two calls, or "
+ "is steered by a prompt-injection payload hidden in the code under repair. The "
+ "contribution of treating agents as replicas is to bring these everyday stochastic "
+ "failures under the same formal umbrella that has long protected against crashed servers, "
+ "so that the safety argument does not depend on any single model behaving well.",
+]),
+("2.3.2 Multi-Agent Large Language Model Frameworks", [
+ "Multi-agent LLM frameworks have proliferated rapidly, and they fall into a small number "
+ "of architectural patterns. Pipeline frameworks chain specialised agents, for example a "
+ "planner, a coder and a tester, so that each consumes the previous agent's output. "
+ "Debate and self-reflection frameworks have multiple agents argue toward a consensus or "
+ "have a single agent critique its own draft. Role-playing frameworks assign personas to "
+ "agents to elicit diverse reasoning. Across these patterns the aggregation of opinions is "
+ "almost always either coordinator-mediated, in which one privileged agent decides, or "
+ "majority-based over agents that share a base model. Both choices are reasonable for "
+ "improving answer quality, but neither is designed to withstand an adversarial member.",
+ "The limitation matters for safety-critical use. A coordinator is a single point of "
+ "trust whose compromise defeats the whole arrangement, and a majority of homogeneous "
+ "agents fails in correlated ways because the agents share training data and therefore "
+ "share blind spots. Empirical work on ensembling has repeatedly found that diversity "
+ "among the members is what produces error decorrelation; a majority of near-identical "
+ "voters provides little more assurance than a single voter. This study takes that finding "
+ "seriously by drawing its validators from different providers and model families, and by "
+ "refusing to let the proposing agent vote on its own fix. The result is closer to an "
+ "independent jury than to a committee, which is the property the Byzantine analysis "
+ "requires.",
+ "A second observation from this literature is that very few frameworks expose a formal "
+ "safety contract. They report task-success metrics, such as solved-issue rate on a "
+ "benchmark, but they do not state a fault budget or prove what happens when a member "
+ "misbehaves. The absence of such a contract is precisely the gap that motivates the "
+ "consensus layer described in Chapter 3, whose behaviour under defined faults is the "
+ "subject of the experiments in Chapter 4.",
+]),
+("2.3.3 Automated Program Repair", [
+ "Automated program repair has three broad lineages. Heuristic search techniques, "
+ "exemplified by GenProg, treat repair as a search over mutations of the program guided by "
+ "a test suite. Semantic and constraint-based techniques synthesise patches that satisfy "
+ "inferred specifications. Learning-based techniques, now dominated by large language "
+ "models, generate patches directly from the failing context. Each lineage confronts the "
+ "same fundamental obstacle, which is the weakness of the oracle. A patch is accepted "
+ "because it makes the available tests pass, but a test suite is an incomplete "
+ "specification, so a patch that passes can still be wrong. This is the overfitting "
+ "problem, and it is the reason that patch plausibility and patch correctness must be kept "
+ "distinct.",
+ "The learning-based turn has sharpened both the promise and the risk. LLM-based repair "
+ "can fix bugs that defeated earlier techniques, because the model brings broad prior "
+ "knowledge of APIs and idioms. But it also produces patches that are syntactically "
+ "convincing and semantically wrong with greater fluency than any previous method, which "
+ "makes a weak oracle more dangerous, not less. The mitigation adopted here is twofold: "
+ "the repair decision is gated by an independent quorum rather than by the proposer's own "
+ "confidence, and the cross-language evaluation uses a real full test-suite oracle, the "
+ "Defects4J suites, so that a fix reported as verified has passed the project's own tests "
+ "rather than a single reproduction script. The study is candid that its Python "
+ "experiments use a weaker run-as-script oracle and reports those repair outcomes as "
+ "preliminary for that reason.",
+ "Positioning the consensus layer against this literature clarifies what it is and is "
+ "not. It is not a new patch-generation technique; it does not propose a better way to "
+ "synthesise edits. It is a safety governor that sits above any generator, deciding "
+ "whether a proposed fix may be applied. As such it is complementary to advances in "
+ "generation, and its value is measured not by how many bugs it fixes but by how reliably "
+ "it refuses to apply uncertified or adversarial fixes while still allowing genuine ones "
+ "through.",
+]),
+("2.3.4 Reliability and Integrity of E-Commerce Systems", [
+ "The e-commerce setting adds a layer of domain-specific integrity constraints that "
+ "generic repair metrics do not capture. An order total must equal the sum of line items "
+ "net of discounts and tax; inventory must not go negative; a payment must not be captured "
+ "twice; a price must not become non-positive through a faulty discount. These are "
+ "business invariants, and a patch that restores a failing test while violating one of "
+ "them is worse than the original bug, because it can corrupt financial state silently. "
+ "The literature on e-commerce reliability has historically treated such invariants "
+ "through transaction design and database constraints, not through the lens of autonomous "
+ "code modification.",
+ "This study incorporates the invariants as an explicit gate within the sandbox, so that "
+ "even a fix that has cleared the quorum is rejected if executing it would violate a "
+ "domain invariant. Reporting is honest about the outcome: across the e-commerce "
+ "micro-benchmark the invariant layer showed no measurable effect on the headline "
+ "results, because the quorum and the sandbox together already screened out the unsafe "
+ "candidates. That negative result is itself informative, since it suggests the invariant "
+ "check functions as a defence-in-depth backstop rather than as the primary safety "
+ "mechanism, and it is stated as such rather than being presented as a benefit the data "
+ "do not support.",
+]),
+("2.3.5 Synthesis: Five Gaps", [
+ "Drawing the three literatures together yields five concrete gaps that the study targets, "
+ "and it is worth stating how each maps onto the work that follows. The first gap is the "
+ "absence of a genuine Byzantine-agreement protocol in agentic repair; this is addressed "
+ "by the 3f + 1 consensus engine of Chapter 3 and demonstrated under an equivocating "
+ "primary in Chapter 4. The second gap is the reliance on homogeneous voters; this is "
+ "addressed by drawing validators from heterogeneous model families and measuring their "
+ "decorrelation, which the data show to be imperfect and which the study reports as a "
+ "negative finding rather than overselling.",
+ "The third gap is the weakness of repair oracles; this is addressed by adding a "
+ "real full-suite Defects4J evaluation alongside the weaker Python oracle, and by labelling "
+ "the Python repair outcomes as preliminary. The fourth gap is the lack of an explicit "
+ "safety contract under fault injection; this is addressed by the adversarial-behaviour "
+ "matrix and the f = 2 tight-bound experiment, which show the quorum masking faulty votes "
+ "up to the replication bound and failing safely beyond it. The fifth gap is the neglect "
+ "of domain invariants in autonomous repair; this is addressed by the e-commerce invariant "
+ "gate, whose null effect is reported honestly. Naming the gaps in this way gives the "
+ "empirical chapters a clear remit: each experiment exists to provide evidence for or "
+ "against the closing of a specific, pre-registered gap.",
+]),
+]
