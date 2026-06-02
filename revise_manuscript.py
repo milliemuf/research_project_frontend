@@ -294,37 +294,46 @@ set_text(find_para(d, "The consensus engine runs PBFT with f = 1"),
     ("The consensus engine runs PBFT with f = 1 over four independent validator replicas "
      "(n = 3f + 1 = 4), each a different model: Claude-Haiku, GPT-4o-mini, llama3.1:8b and "
      "mistral:7b. It runs PBFT's three phases (pre-prepare, prepare, commit), each message "
-     "signed with a per-replica Ed25519 key. The Healer (GPT-4o) is the proposer: it submits "
+     "signed by its sending replica (the protocol simulation of Section 6.14 uses Ed25519 "
+     "keys verified on receipt; the in-process pipeline uses a lightweight HMAC, as there is "
+     "no live attacker to defend against). The Healer (GPT-4o) is the proposer: it submits "
      "one candidate fix and casts no vote, and a byte digest binds every prepare and commit "
      "to that proposal, as in classical PBFT. The Analyzer (Claude Sonnet) feeds the "
      "diagnosis to the proposer and likewise does not vote. In the prepare phase each of the "
      "four validators independently casts an accept or reject vote; with the 2f + 1 = 3 "
      "quorum a fix is approved when at least three of the four accept and rejected otherwise, "
      "and the commit phase confirms the bound proposal. Because all four verdicts are "
-     "independent and model-diverse, the configuration realises the textbook guarantee of "
-     "tolerating f Byzantine replicas among 3f + 1; we verify this directly by injecting "
-     "Byzantine behaviour into a validator (Section 6.6) and by an f = 2 tight-bound study "
-     "(Section 6.13). Agreement here is over a single proposal; agreement among several "
+     "independent and model-diverse, a corrupted validator's vote is outvoted by the honest "
+     "quorum (the fault-injection runs of Section 6.6), and this masking is tight at the "
+     "3f + 1 bound (the f = 2 study of Section 6.13). These runs handle a validator that "
+     "merely votes wrongly; the defining Byzantine property — preserving agreement when the "
+     "proposer itself equivocates, telling different replicas different things — is the harder "
+     "case, demonstrated in the protocol simulation of Section 6.14, which is where the "
+     "Byzantine-fault-tolerance claim is earned. Agreement here is over a single proposal; "
+     "agreement among several "
      "independent proposals, where heterogeneous agents rarely produce identical text, is "
      "the separate semantic-equivalence quorum (Sections 5.10 and 6.9). Leader replacement "
      "(view-change) is implemented; primary-failure recovery under continuous faults is left "
      "to future work (Section 8.2)."))
 # Insert an explicit threat-model / scope paragraph right after 3.2.
 insert_after(find_para(d, "The consensus engine runs PBFT with f = 1"), [
-    (("Threat model and scope. The prototype runs all four validator replicas as asynchronous "
-      "tasks inside one trusted Python process; there is no real network, Sybil, or message-"
-      "tampering adversary, and the Ed25519 signatures therefore protect message integrity by "
-      "construction rather than against a live attacker. The adversary we model is a Byzantine "
-      "validator, simulated by a wrapper that forces always-reject, always-approve, random, "
-      "timeout or garbage behaviour (Section 5.5); this is why the protocol adds under 2 ms, "
-      "as there is no distributed coordination to pay for. Within this model the consensus is "
-      "genuine 3f + 1 Byzantine fault tolerance: four independent, model-diverse validators "
-      "vote, and the f = 1 quorum tolerates exactly one corrupted voter, demonstrated "
-      "empirically (Section 6.6) and shown to be tight at f = 2 (Section 6.13). What remains "
-      "out of scope is the distributed setting, real inter-host messaging, network "
-      "partitions, and view-change under primary failure; we evaluate genuine BFT consensus "
-      "in a single-process simulation, and hardening it for a distributed deployment is the "
-      "natural next step (Section 8)."), None),
+    (("Threat model and scope. The system is evaluated in two complementary harnesses, and "
+      "the threat model differs between them. The LLM safety pipeline (Sections 6.1 to 6.13) "
+      "runs all four validator replicas as asynchronous tasks inside one trusted Python "
+      "process: there is no real network and no message-tampering or Sybil adversary, the "
+      "only injected fault is a Byzantine validator that votes maliciously (a wrapper forcing "
+      "always-reject, always-approve, random, timeout or garbage behaviour, Section 5.5), and "
+      "the message signatures there (a lightweight HMAC) protect integrity by construction "
+      "rather than "
+      "against a live attacker. In that harness the quorum simply masks one faulty vote, "
+      "which is why the protocol adds under 2 ms: there is no distributed coordination to pay "
+      "for. The genuinely Byzantine setting — independent replicas exchanging signed messages "
+      "over a network that can delay, drop and partition them, against a primary that "
+      "equivocates and nodes that attempt to forge messages — is evaluated separately in the "
+      "deterministic protocol simulation of Section 6.14, where signatures are verified on "
+      "receipt and forged messages are rejected. What remains out of scope in both harnesses "
+      "is a multi-host deployment and view-change under primary failure; hardening the "
+      "protocol for distributed operation is the natural next step (Section 8)."), None),
 ])
 
 # --- 6.6: state precisely who is corrupted and how the quorum forms (genuine 3f+1)
@@ -510,11 +519,11 @@ last = paras_after_element(t10._tbl, cap10, [
     ("CONSENSUS LATENCY VERSUS AGENT COUNT (E-COMMERCE, 5 BUGS)", None),
 ])
 t11 = add_table_after(d, last,
-    ["Configuration", "Validators", "p50 latency", "p99 latency", "Success rate",
-     "Safety violations"],
-    [["n = 4 (f = 1)", 2, "53.3 s", "59.6 s", "100%", 0],
-     ["n = 7 (f = 2)", 5, "71.3 s", "78.0 s", "100%", 0],
-     ["n = 10 (f = 3)", 8, "80.1 s", "168.6 s", "100%", 0]])
+    ["Configuration", "Independent validators", "p50 latency", "p99 latency",
+     "Success rate", "Safety violations"],
+    [["n = 4 (f = 1)", 4, "53.3 s", "59.6 s", "100%", 0],
+     ["n = 7 (f = 2)", 7, "71.3 s", "78.0 s", "100%", 0],
+     ["n = 10 (f = 3)", 10, "80.1 s", "168.6 s", "100%", 0]])
 
 # --- 6.13 f = 2 Byzantine tolerance + tight bound (genuine 3f+1, n = 7, quorum = 5) ---
 f2_body = (
@@ -957,7 +966,8 @@ set_text(find_para(d, "RQ3. Can multi-agent consensus improve reliability over s
 # Conclusion paired-bugs sentence
 set_text(find_para(d, "Across 90 paired bugs, BFT-MAS removed safety violations entirely"),
     ("On the BugsInPy subset BFT-MAS directionally reduced the safety-violation rate (75% "
-     "to 50%) and raised the repair rate (25% to 50%) at roughly double the latency, neither "
+     "to 50%) and raised the repair rate (25% to 50%) at roughly three times the latency, "
+     "neither "
      "difference being significant at this sample size. The result the paper rests on is "
      "deterministic: under all five fault behaviours four independent validators tolerated one "
      "corrupted voter (f = 1), the f = 2 study showed the bound is exact, and the sandbox "
@@ -1178,11 +1188,13 @@ set_text(find_para(d, "The empirical answer to RQ1 is n = 4, f = 1"),
 set_text(find_para(d, "RQ1. What is the optimal number of agents for Byzantine fault tolerance without"),
     ("RQ1. What is the optimal number of agents for Byzantine fault tolerance without "
      "excessive latency? The PBFT bound n ≥ 3f + 1 fixes the design floor at n = 4 for "
-     "f = 1, and the fault-injection study confirms that four independent validators "
-     "genuinely tolerate one Byzantine voter across all five behaviours (Section 6.6), with "
-     "the f = 2 study showing the bound is exact (Section 6.13). On the cost-benefit axis, "
-     "n = 7 (f = 2) only lowered raw success and raised latency with no repair gain (Section "
-     "6.8), while n = 4 gave the best success and lowest latency. The practical optimum is "
+     "f = 1, and the fault-injection study shows the quorum masks a faulty validator's vote "
+     "across all five behaviours (Section 6.6), with the f = 2 study showing that masking is "
+     "tight at the 3f + 1 bound (Section 6.13) and the defining Byzantine property — agreement "
+     "under an equivocating primary — demonstrated separately (Section 6.14). On the cost-"
+     "benefit axis, n = 7 (f = 2) only lowered raw success (Section 6.8) and raised latency "
+     "(Section 6.12) with no repair gain, while n = 4 gave the best success and lowest "
+     "latency. The practical optimum is "
      "therefore n = 4, f = 1: genuine single-fault tolerance at the lowest cost, with larger "
      "populations reserved for threat models that require tolerating more faults."))
 # §8.5: genuine 3f+1 is realised here; the remaining step is distribution
@@ -1198,11 +1210,54 @@ set_text(find_para(d, "The Byzantine wrapper sits only on validators here."),
 
 # Latency/RQ1 prose: n = 7 means seven INDEPENDENT validators now (not "five instead
 # of two" from the old standing-accept design).
+# Latency multiplier appears in several places with the stale "2.0x" and a reversed
+# "1.07x on BugsInPy" claim; unify to the real ~3x average (widest on BugsInPy) and
+# drop the "removal of / zero safety violations" overclaim (repair is now directional).
+set_text(find_para(d, "Figure 4. Repair-duration distribution per dataset"),
+    ("Figure 4. Repair-duration distribution per dataset and pipeline mode. The consensus "
+     "mode (blue) runs roughly three times slower than the single-agent baseline (amber) "
+     "overall, and the gap is widest on BugsInPy (about 3.9x), where the consensus pipeline "
+     "makes repeated validator-gated repair attempts on hard real bugs. White diamonds mark "
+     "the means; bold horizontal lines mark the medians."))
+set_text(find_para(d, "There is also a clear cost story: consensus is roughly"),
+    ("There is also a clear cost story: consensus is roughly three times slower per repair, "
+     "almost entirely from validator latency. Where each repair is a high-stakes commit such "
+     "as production payment logic, trading tens of seconds (about 30 s on e-commerce, more on "
+     "hard real bugs) for fewer unsafe fixes is defensible; where speed dominates, it may "
+     "not be. The synthetic benchmark, perfect in both modes, is a sanity check."))
+set_text(find_para(d, "RQ2. How does consensus latency affect real-time repair?"),
+    ("RQ2. How does consensus latency affect real-time repair? The protocol adds under 2 ms "
+     "per round; the added latency — on e-commerce, about 53 s mean against 18 s for the "
+     "baseline — comes from LLM I/O and Ollama inference, not consensus. This roughly "
+     "threefold increase is the cost of the extra validators, and trading tens of seconds for "
+     "fewer unsafe fixes is defensible for high-stakes commits."))
+
+# Per-dataset latency summary: align BugsInPy to the real r2_bip numbers (160.5 s vs
+# 41.4 s), correct the average slowdown, the "two run" fossil, and the now-reversed
+# "gap narrows on BugsInPy" claim (the gap is widest there).
+set_text(find_para(d, "Consensus is about 2.0× slower than the baseline on average"),
+    ("Consensus is about three times slower than the baseline on average (p50: synthetic "
+     "44.5 s vs 14.6 s, BugsInPy 160.5 s vs 41.4 s, e-commerce 50.7 s vs 18.4 s), dominated "
+     "by the validator stage, since each CPU-bound Ollama validator takes 30 to 40 s and they "
+     "run concurrently. The protocol itself adds under 2 ms per round; the gap is widest on "
+     "BugsInPy, where hard real bugs drive repeated repair attempts, each paying the full "
+     "validator round (Figure 4)."))
+
+# §6.8 "Three findings": latency now lives only in §6.12; drop the (removed) Table 8
+# latency numbers and the "five validators" fossil.
+set_text(find_para(d, "Three findings follow (Table 8)"),
+    ("Three findings follow (Table 8): safety violations stay at zero, so extra validators do "
+     "not improve safety; raw success drops from 100% to 90% as the 2f + 1 = 5 quorum is "
+     "harder to reach; and latency rises with the validator count (reported in Section 6.12, "
+     "Table 11), set by the slowest of the seven concurrent validators."))
 set_text(find_para(d, "To answer RQ1 directly, the e-commerce set was re-run"),
     ("To answer RQ1 directly, the e-commerce set was re-run with seven independent validators "
      "instead of four, satisfying n = 3f + 1 = 7 at f = 2, so the system tolerates two "
      "simultaneous Byzantine validators; the tight-bound study (Section 6.13) confirms that a "
-     "third would break consensus. The analyzer, healer and baseline were held constant."))
+     "third would break consensus. The analyzer, healer and baseline were held constant. "
+     "Table 8 compares success, safety and validator agreement at n = 4 and n = 7; how "
+     "latency scales with the validator count is reported separately in Section 6.12 "
+     "(Table 11), so that latency appears in one place only."))
 
 # Pipeline descriptions + early decorrelation line still named the OLD "two Ollama
 # validators"; update to the four independent, model-diverse validators.
@@ -1332,9 +1387,11 @@ for _t in d.tables:
                     _r.cells[_j].text = _v
         break
 
-# Agent-count latency table (idx 7): correct the OLD-design "two/five validators"
-# wording to the genuine independent-validator counts (latency figures are the p6
-# numbers, retained per the variance/latency fallback decision).
+# Agent-count table (idx 7 / Table 8): correct the OLD-design "two/five validators"
+# wording, AND drop its "Latency p50" column so latency is reported only in Table 11
+# (Section 6.12) — the two tables use different e-commerce subsets (30 vs 5 bugs), so
+# carrying a latency figure in both produced conflicting p50 values for the same n.
+from docx.oxml.ns import qn as _qncol
 for _t in d.tables:
     if "Latency p50" in _hdr(_t) and _t.rows[1].cells[0].text.strip().startswith("n = 4"):
         for _r in _t.rows[1:]:
@@ -1342,6 +1399,15 @@ for _t in d.tables:
             _c0 = _c0.replace("two validators, default", "four independent validators, default")
             _c0 = _c0.replace("five validators", "seven independent validators")
             _r.cells[0].text = _c0
+        _ci = _hdr(_t).index("Latency p50")
+        _grid = _t._tbl.find(_qncol("w:tblGrid"))
+        _gcols = _grid.findall(_qncol("w:gridCol"))
+        if _ci < len(_gcols):
+            _grid.remove(_gcols[_ci])
+        for _r in _t.rows:
+            _tcs = _r._tr.findall(_qncol("w:tc"))
+            if _ci < len(_tcs):
+                _r._tr.remove(_tcs[_ci])
         break
 
 # Agent-diversity ablation (idx 6) REFRAMED as a decorrelation table (user decision):
