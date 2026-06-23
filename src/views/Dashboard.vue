@@ -76,7 +76,7 @@ const sparkline = computed(() => {
             and reach Byzantine-resilient consensus before any change is applied. Current cluster:
             <span class="text-ink-100 font-mono">{{ metrics?.agents_total ?? '…' }} agents</span>, tolerating up to
             <span class="text-ink-100 font-mono">f = {{ byzantineF }}</span> faults. Evaluated on
-            <span class="text-ink-100 font-mono">2,501</span> real and synthetic bugs across BugsInPy, Defects4J, and an e-commerce simulator.
+            <span class="text-ink-100 font-mono">90</span> paired bugs (synthetic, e-commerce, BugsInPy) plus a real-Java Defects4J set with the real JUnit oracle.
           </p>
           <div class="flex flex-wrap items-center gap-2 pt-1">
             <span class="tag tag-violet">Analyzer × {{ agentCount('analyzer') }}</span>
@@ -96,8 +96,8 @@ const sparkline = computed(() => {
           </div>
           <div class="panel-quiet p-4">
             <p class="eyebrow">Avg consensus</p>
-            <p class="font-display text-3xl text-cyan-300 mt-1">{{ metrics?.average_consensus_time_ms ?? 0 }}<span class="text-base text-ink-400">ms</span></p>
-            <p class="font-mono text-[10px] text-ink-400 mt-1">PBFT 4-phase median</p>
+            <p class="font-display text-3xl text-cyan-300 mt-1">{{ (metrics?.average_consensus_time_ms ?? 0) > 0 ? metrics.average_consensus_time_ms : '<2' }}<span class="text-base text-ink-400">ms</span></p>
+            <p class="font-mono text-[10px] text-ink-400 mt-1">PBFT protocol layer / round</p>
           </div>
           <div class="panel-quiet p-4">
             <p class="eyebrow">Mesh online</p>
@@ -107,7 +107,7 @@ const sparkline = computed(() => {
           <div class="panel-quiet p-4">
             <p class="eyebrow">Uptime</p>
             <p class="font-display text-3xl text-ink-100 mt-1">{{ uptime }}</p>
-            <p class="font-mono text-[10px] text-ink-400 mt-1">View #18</p>
+            <p class="font-mono text-[10px] text-ink-400 mt-1">PBFT · genuine 3f+1</p>
           </div>
         </div>
       </div>
@@ -151,9 +151,10 @@ const sparkline = computed(() => {
         </div>
         <div class="panel-body space-y-3">
           <div v-for="d in [
-            { name:'BugsInPy',           total:493,  loaded:501,  color:'from-violet-400 to-violet-600' },
-            { name:'Defects4J',          total:835,  loaded:0,    color:'from-amber-400 to-amber-600' },
-            { name:'Synthetic e-comm.',  total:2000, loaded:2000, color:'from-cyan-400 to-cyan-600' },
+            { name:'Synthetic',          total:40, loaded:40, color:'from-cyan-400 to-cyan-600' },
+            { name:'E-commerce',         total:30, loaded:30, color:'from-emerald-400 to-emerald-600' },
+            { name:'BugsInPy (real)',    total:20, loaded:20, color:'from-violet-400 to-violet-600' },
+            { name:'Defects4J (Java)',   total:18, loaded:18, color:'from-amber-400 to-amber-600' },
           ]" :key="d.name">
             <div class="flex items-center justify-between text-[12px]">
               <span class="text-ink-200">{{ d.name }}</span>
@@ -165,7 +166,7 @@ const sparkline = computed(() => {
             </div>
           </div>
           <p class="font-mono text-[10px] text-ink-400 pt-1">
-            Defects4J cloned · awaits <span class="kbd">./init.sh</span> (Java 8+)
+            Defects4J: real JUnit oracle · 2 full-suite-verified fixes (Math-3, Math-5)
           </p>
         </div>
       </div>

@@ -21,7 +21,9 @@ const filtered = computed(() =>
 )
 
 const stats = computed(() => {
-  const n = agentsStore.agents.length || 9
+  // The BFT cluster is the voting validators (genuine 3f+1); the analyzer and
+  // healer propose/feed but do not vote, so they are not counted in n.
+  const n = agentsStore.agents.filter(a => a.agent_type === 'validator').length || 4
   const f = Math.floor((n - 1) / 3)
   return { n, f, quorum: 2 * f + 1, min: 3 * f + 1 }
 })
@@ -57,7 +59,7 @@ const stats = computed(() => {
         <div class="panel-quiet p-4">
           <p class="eyebrow">Cluster size · N</p>
           <p class="font-display text-3xl text-ink-100 mt-1">{{ stats.n }}</p>
-          <p class="font-mono text-[10px] text-ink-400 mt-1">Heterogeneous LLMs</p>
+          <p class="font-mono text-[10px] text-ink-400 mt-1">Independent validators</p>
         </div>
         <div class="panel-quiet p-4">
           <p class="eyebrow">Fault tolerance · f</p>
@@ -91,7 +93,7 @@ const stats = computed(() => {
                 {{ a.agent_type.charAt(0).toUpperCase() }}
               </div>
               <div>
-                <p class="font-medium text-ink-100 leading-tight">{{ a.name.split('·')[1]?.trim() || a.name }}</p>
+                <p class="font-medium text-ink-100 leading-tight">{{ a.name.split(' - ')[0].trim() }}</p>
                 <p :class="['font-mono text-[11px] mt-0.5', typeMeta[a.agent_type].text]">{{ a.agent_type }}</p>
               </div>
             </div>
@@ -111,15 +113,15 @@ const stats = computed(() => {
             </div>
             <div>
               <p class="eyebrow">Model</p>
-              <p class="font-mono text-ink-200 mt-0.5 truncate">{{ a.model || '—' }}</p>
+              <p class="font-mono text-ink-200 mt-0.5 truncate">{{ a.model || a.name.split(' - ')[1]?.trim() || '—' }}</p>
             </div>
             <div>
-              <p class="eyebrow">Acceptance</p>
-              <p class="font-mono text-ink-200 mt-0.5">{{ a.accepted_proposals }}/{{ a.total_proposals }}</p>
+              <p class="eyebrow">{{ a.agent_type === 'validator' ? 'Accept rate' : 'Tasks' }}</p>
+              <p class="font-mono text-ink-200 mt-0.5">{{ a.accepted_proposals ?? a.successful_tasks ?? 0 }}/{{ a.total_proposals ?? a.total_tasks ?? 0 }}</p>
             </div>
             <div>
               <p class="eyebrow">Avg latency</p>
-              <p class="font-mono text-ink-200 mt-0.5">{{ a.avg_latency_ms }}ms</p>
+              <p class="font-mono text-ink-200 mt-0.5">{{ a.avg_latency_ms ?? a.average_latency_ms ?? 0 }}ms</p>
             </div>
           </div>
 

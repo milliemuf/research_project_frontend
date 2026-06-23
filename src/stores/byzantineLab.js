@@ -36,7 +36,7 @@ export const useByzantineLabStore = defineStore('byzantineLab', () => {
     const faults = agents.value.filter(a => a.fault_injected).map(a => ({
       agent_id: a.id, fault_type: a.fault_type,
     }))
-    const n = agents.value.length || 9
+    const n = agents.value.length || 4
     const maxFaults = Math.floor((n - 1) / 3)
     await new Promise(r => setTimeout(r, 800 + Math.random() * 600))
     const survived = faults.length <= maxFaults ? Math.random() > 0.08 : Math.random() > 0.75

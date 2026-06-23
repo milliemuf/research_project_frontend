@@ -58,9 +58,10 @@ const maxByType  = computed(() => Math.max(...byBugType.value.map(b => b.sample_
           <p class="eyebrow">Empirical evaluation · 3 datasets</p>
           <h2 class="font-display text-2xl text-ink-100 mt-2">Repair Effectiveness Report</h2>
           <p class="text-ink-300 text-sm mt-2 max-w-xl">
-            CodeFlow AI evaluated against {{ overall.total.toLocaleString() }} bugs across BugsInPy (real Python),
-            Defects4J (real Java), and a synthetic e-commerce harness. Pass@1 / pass@5 reported following the
-            program-repair literature convention (Tufano et al., 2019; Xia &amp; Zhang, 2023).
+            CodeFlow AI evaluated on {{ overall.total.toLocaleString() }} paired bugs under genuine 3f+1 consensus,
+            a curated synthetic suite, an e-commerce-invariant suite, and a real-Python BugsInPy subset. A
+            cross-language run on real Java bugs (Defects4J, real JUnit oracle) produced two full-suite-verified
+            repairs (Math-3, Math-5). Success = a fix passes the executable oracle within the repair-attempt budget.
           </p>
         </div>
         <div class="text-right">
@@ -75,12 +76,12 @@ const maxByType  = computed(() => Math.max(...byBugType.value.map(b => b.sample_
     <section class="panel">
       <div class="panel-header">
         <h3 class="panel-title">Per-dataset performance</h3>
-        <span class="font-mono text-[11px] text-ink-400">pass@k = top-k generations contain a passing patch</span>
+        <span class="font-mono text-[11px] text-ink-400">consensus pipeline · genuine 3f+1 (n=4, f=1, quorum=3)</span>
       </div>
       <div class="panel-body p-0">
         <table class="tbl">
           <thead>
-            <tr><th>Dataset</th><th>Total</th><th>Attempted</th><th>Fixed</th><th>Pass@1</th><th>Pass@5</th><th>Coverage</th></tr>
+            <tr><th>Dataset</th><th>Total</th><th>Attempted</th><th>Fixed</th><th>Success</th><th>Recall</th><th>Coverage</th></tr>
           </thead>
           <tbody>
             <tr v-for="d in datasets" :key="d.name">
@@ -108,7 +109,7 @@ const maxByType  = computed(() => Math.max(...byBugType.value.map(b => b.sample_
     </section>
 
     <!-- Throughput -->
-    <section class="panel">
+    <section class="panel" v-if="throughput.length">
       <div class="panel-header">
         <h3 class="panel-title">Throughput · last 60 min</h3>
         <span class="font-mono text-[11px] text-ink-400">bugs / min</span>
@@ -130,11 +131,11 @@ const maxByType  = computed(() => Math.max(...byBugType.value.map(b => b.sample_
       </div>
     </section>
 
-    <!-- Bug type + severity + latency -->
+    <!-- Success by dataset & configuration -->
     <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
       <!-- Bug type heatmap -->
-      <div class="panel xl:col-span-2">
-        <div class="panel-header"><h3 class="panel-title">Success rate by bug type</h3></div>
+      <div class="panel xl:col-span-3">
+        <div class="panel-header"><h3 class="panel-title">Success rate by dataset &amp; configuration (real results)</h3></div>
         <div class="panel-body space-y-2">
           <div v-for="row in byBugType" :key="row.bug_type" class="grid grid-cols-12 items-center gap-3">
             <span class="col-span-3 font-mono text-[11.5px] text-ink-200 truncate">{{ row.bug_type.replace(/_/g, ' ') }}</span>
@@ -150,7 +151,7 @@ const maxByType  = computed(() => Math.max(...byBugType.value.map(b => b.sample_
       </div>
 
       <!-- Latency distribution -->
-      <div class="panel">
+      <div class="panel" v-if="latency.length">
         <div class="panel-header"><h3 class="panel-title">Consensus latency</h3></div>
         <div class="panel-body space-y-2">
           <div v-for="b in latency" :key="b.bucket" class="space-y-1">
@@ -169,7 +170,7 @@ const maxByType  = computed(() => Math.max(...byBugType.value.map(b => b.sample_
     </section>
 
     <!-- Severity + reputation -->
-    <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-6" v-if="bySeverity.length || reputation.length">
       <!-- Severity breakdown -->
       <div class="panel">
         <div class="panel-header"><h3 class="panel-title">Success by severity</h3></div>
@@ -219,12 +220,14 @@ const maxByType  = computed(() => Math.max(...byBugType.value.map(b => b.sample_
     <section class="panel p-5">
       <p class="eyebrow">Methodology</p>
       <p class="text-[12.5px] text-ink-300 mt-2 leading-relaxed">
-        Each bug is presented to all three analyzers; the resulting root-cause vector is fed to all three healers,
-        each generating an independent fix candidate. Validators run the candidate in an isolated Docker sandbox
-        with the project's own test suite plus a regression battery, then vote in two PBFT phases (prepare, commit).
-        A fix is applied iff it receives <span class="font-mono text-ink-100">2f+1</span> matching commit votes,
-        where <span class="font-mono text-ink-100">f = ⌊(N-1)/3⌋</span> for cluster size <span class="font-mono text-ink-100">N=9</span>.
-        Reputation updates use exponential decay following Castro &amp; Liskov (1999) extended with cross-LLM disagreement weighting.
+        Each bug is diagnosed by the Analyzer (Claude Sonnet, no vote) and a fix is proposed by the Healer
+        (GPT-4o, the proposer, no vote). The candidate is then voted on by <span class="font-mono text-ink-100">four
+        independent, model-diverse validators</span> (Claude-Haiku, GPT-4o-mini, llama3.1:8b, mistral:7b) under
+        Practical Byzantine Fault Tolerance (<span class="font-mono text-ink-100">n = 3f+1 = 4</span>,
+        <span class="font-mono text-ink-100">f = 1</span>, quorum <span class="font-mono text-ink-100">2f+1 = 3</span>).
+        A fix is approved iff at least three of the four validators accept, and every approved fix is then executed
+        in an isolated Docker sandbox, no fix counts as a repair unless it passes that executable check. BugsInPy
+        uses a run-as-script oracle; the Defects4J Java run uses each project's real JUnit suite (Castro &amp; Liskov, 1999).
       </p>
     </section>
   </div>

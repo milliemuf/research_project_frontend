@@ -1,0 +1,602 @@
+[
+  {
+    "bug_id": "syn-001-off-by-one",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 3,
+    "error_message": "IndexError: list index out of range",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 11, in <module>\n    assert sum_first_n([1, 2, 3, 4, 5], 5) == 15\n  File \"main.py\", line 4, in sum_first_n\n    total += xs[i]\nIndexError: list index out of range",
+    "code_context": "def sum_first_n(xs, n):\n    total = 0\n    for i in range(n + 1):\n        total += xs[i]\n    return total\n\nif __name__ == '__main__':\n    assert sum_first_n([1, 2, 3, 4, 5], 5) == 15\n    assert sum_first_n([10, 20, 30], 2) == 30\n    print('ok')\n",
+    "canonical_fixed_code": "def sum_first_n(xs, n):\n    total = 0\n    for i in range(n):\n        total += xs[i]\n    return total\n\nif __name__ == '__main__':\n    assert sum_first_n([1, 2, 3, 4, 5], 5) == 15\n    assert sum_first_n([10, 20, 30], 2) == 30\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-002-mutable-default",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 1,
+    "error_message": "AssertionError: append leaks across calls",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 9, in <module>\n    assert append(2) == [2]\nAssertionError: append leaks across calls",
+    "code_context": "def append(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nif __name__ == '__main__':\n    assert append(1) == [1]\n    assert append(2) == [2], 'append leaks across calls'\n    print('ok')\n",
+    "canonical_fixed_code": "def append(item, bucket=None):\n    if bucket is None:\n        bucket = []\n    bucket.append(item)\n    return bucket\n\nif __name__ == '__main__':\n    assert append(1) == [1]\n    assert append(2) == [2], 'append leaks across calls'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-003-int-vs-float-div",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 4,
+    "error_message": "AssertionError: average rounded down",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 9, in <module>\n    assert abs(average([1, 2, 4]) - 2.333) < 0.01\nAssertionError: average rounded down",
+    "code_context": "def average(xs):\n    if not xs:\n        return 0\n    return sum(xs) // len(xs)\n\nif __name__ == '__main__':\n    assert abs(average([1, 2, 4]) - 2.333) < 0.01, 'average rounded down'\n    print('ok')\n",
+    "canonical_fixed_code": "def average(xs):\n    if not xs:\n        return 0\n    return sum(xs) / len(xs)\n\nif __name__ == '__main__':\n    assert abs(average([1, 2, 4]) - 2.333) < 0.01, 'average rounded down'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-004-none-attribute",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 4,
+    "error_message": "AttributeError: 'NoneType' object has no attribute 'upper'",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 10, in <module>\n    assert greet(None) == ''\n  File \"main.py\", line 4, in greet\n    return name.upper()\nAttributeError: 'NoneType' object has no attribute 'upper'",
+    "code_context": "def greet(name):\n    return name.upper()\n\nif __name__ == '__main__':\n    assert greet('alice') == 'ALICE'\n    assert greet(None) == ''\n    print('ok')\n",
+    "canonical_fixed_code": "def greet(name):\n    if name is None:\n        return ''\n    return name.upper()\n\nif __name__ == '__main__':\n    assert greet('alice') == 'ALICE'\n    assert greet(None) == ''\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-005-str-int-concat",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "TypeError: can only concatenate str (not \"int\") to str",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 7, in <module>\n    assert label(5) == 'count: 5'\n  File \"main.py\", line 2, in label\n    return 'count: ' + n\nTypeError: can only concatenate str (not \"int\") to str",
+    "code_context": "def label(n):\n    return 'count: ' + n\n\nif __name__ == '__main__':\n    assert label(5) == 'count: 5'\n    assert label(0) == 'count: 0'\n    print('ok')\n",
+    "canonical_fixed_code": "def label(n):\n    return 'count: ' + str(n)\n\nif __name__ == '__main__':\n    assert label(5) == 'count: 5'\n    assert label(0) == 'count: 0'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-006-slice-off-by-one",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: tail slice wrong",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 7, in <module>\n    assert all_but_last('hello') == 'hell'\nAssertionError: tail slice wrong",
+    "code_context": "def all_but_last(s):\n    return s[1:-1]\n\nif __name__ == '__main__':\n    assert all_but_last('hello') == 'hell', 'tail slice wrong'\n    assert all_but_last('a') == ''\n    print('ok')\n",
+    "canonical_fixed_code": "def all_but_last(s):\n    return s[:-1]\n\nif __name__ == '__main__':\n    assert all_but_last('hello') == 'hell', 'tail slice wrong'\n    assert all_but_last('a') == ''\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-007-missing-return",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 3,
+    "error_message": "AssertionError: function returned None",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 7, in <module>\n    assert square(4) == 16\nAssertionError: function returned None",
+    "code_context": "def square(x):\n    result = x * x\n\nif __name__ == '__main__':\n    assert square(4) == 16, 'function returned None'\n    assert square(0) == 0\n    print('ok')\n",
+    "canonical_fixed_code": "def square(x):\n    result = x * x\n    return result\n\nif __name__ == '__main__':\n    assert square(4) == 16, 'function returned None'\n    assert square(0) == 0\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-008-wrong-comparison",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: identity-vs-equality on lists",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 7, in <module>\n    assert lists_equal([1, 2], [1, 2])\nAssertionError: identity-vs-equality on lists",
+    "code_context": "def lists_equal(a, b):\n    return a is b\n\nif __name__ == '__main__':\n    assert lists_equal([1, 2], [1, 2]), 'identity-vs-equality on lists'\n    print('ok')\n",
+    "canonical_fixed_code": "def lists_equal(a, b):\n    return a == b\n\nif __name__ == '__main__':\n    assert lists_equal([1, 2], [1, 2]), 'identity-vs-equality on lists'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-009-key-typo",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "KeyError: 'price'",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 7, in <module>\n    assert total({'price': 10, 'qty': 3}) == 30\n  File \"main.py\", line 2, in total\n    return order['pric'] * order['qty']\nKeyError: 'pric'",
+    "code_context": "def total(order):\n    return order['pric'] * order['qty']\n\nif __name__ == '__main__':\n    assert total({'price': 10, 'qty': 3}) == 30\n    assert total({'price': 5, 'qty': 4}) == 20\n    print('ok')\n",
+    "canonical_fixed_code": "def total(order):\n    return order['price'] * order['qty']\n\nif __name__ == '__main__':\n    assert total({'price': 10, 'qty': 3}) == 30\n    assert total({'price': 5, 'qty': 4}) == 20\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-010-zero-division",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "ZeroDivisionError: division by zero",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 7, in <module>\n    assert safe_div(10, 0) == 0\n  File \"main.py\", line 2, in safe_div\n    return a / b\nZeroDivisionError: division by zero",
+    "code_context": "def safe_div(a, b):\n    return a / b\n\nif __name__ == '__main__':\n    assert safe_div(10, 2) == 5\n    assert safe_div(10, 0) == 0\n    print('ok')\n",
+    "canonical_fixed_code": "def safe_div(a, b):\n    if b == 0:\n        return 0\n    return a / b\n\nif __name__ == '__main__':\n    assert safe_div(10, 2) == 5\n    assert safe_div(10, 0) == 0\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-011-list-mutation-during-iter",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: removed wrong elements (in-place mutation skipped one)",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 9, in <module>\n    assert remove_evens([1,2,4,6,7]) == [1,7]\nAssertionError: removed wrong elements",
+    "code_context": "def remove_evens(xs):\n    for x in xs:\n        if x % 2 == 0:\n            xs.remove(x)\n    return xs\n\nif __name__ == '__main__':\n    res = remove_evens([1, 2, 4, 6, 7])\n    assert res == [1, 7], 'removed wrong elements'\n    print('ok')\n",
+    "canonical_fixed_code": "def remove_evens(xs):\n    return [x for x in xs if x % 2 != 0]\n\nif __name__ == '__main__':\n    res = remove_evens([1, 2, 4, 6, 7])\n    assert res == [1, 7], 'removed wrong elements'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-012-shadow-builtin",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "TypeError: 'list' object is not callable",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 9, in <module>\n    assert collect([1, 2, 3]) == [1, 2, 3]\n  File \"main.py\", line 3, in collect\n    return list(items)\nTypeError: 'list' object is not callable",
+    "code_context": "def collect(items):\n    list = []   # bug: shadows the built-in\n    return list(items)\n\nif __name__ == '__main__':\n    assert collect([1, 2, 3]) == [1, 2, 3]\n    print('ok')\n",
+    "canonical_fixed_code": "def collect(items):\n    result = []\n    return list(items)\n\nif __name__ == '__main__':\n    assert collect([1, 2, 3]) == [1, 2, 3]\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-013-wrong-loop-var",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 3,
+    "error_message": "AssertionError: only saw last item",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 9, in <module>\n    assert sum_all([1,2,3,4]) == 10\nAssertionError: only saw last item",
+    "code_context": "def sum_all(xs):\n    total = 0\n    for x in xs:\n        total = x   # bug: assigns instead of adding\n    return total\n\nif __name__ == '__main__':\n    assert sum_all([1, 2, 3, 4]) == 10, 'only saw last item'\n    print('ok')\n",
+    "canonical_fixed_code": "def sum_all(xs):\n    total = 0\n    for x in xs:\n        total += x\n    return total\n\nif __name__ == '__main__':\n    assert sum_all([1, 2, 3, 4]) == 10, 'only saw last item'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-014-empty-list-default",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "ValueError: max() arg is an empty sequence",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 8, in <module>\n    assert highest([]) is None\n  File \"main.py\", line 2, in highest\n    return max(xs)\nValueError: max() arg is an empty sequence",
+    "code_context": "def highest(xs):\n    return max(xs)\n\nif __name__ == '__main__':\n    assert highest([3, 1, 4, 1, 5]) == 5\n    assert highest([]) is None\n    print('ok')\n",
+    "canonical_fixed_code": "def highest(xs):\n    if not xs:\n        return None\n    return max(xs)\n\nif __name__ == '__main__':\n    assert highest([3, 1, 4, 1, 5]) == 5\n    assert highest([]) is None\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-015-string-format-types",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "ValueError: Unknown format code 'd' for object of type 'float'",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 7, in <module>\n    assert price_label(9.99) == 'price: 9'\n  File \"main.py\", line 2, in price_label\n    return f'price: {p:d}'\nValueError: Unknown format code 'd' for object of type 'float'",
+    "code_context": "def price_label(p):\n    return f'price: {p:d}'\n\nif __name__ == '__main__':\n    assert price_label(9.99) == 'price: 9'\n    assert price_label(10) == 'price: 10'\n    print('ok')\n",
+    "canonical_fixed_code": "def price_label(p):\n    return f'price: {int(p)}'\n\nif __name__ == '__main__':\n    assert price_label(9.99) == 'price: 9'\n    assert price_label(10) == 'price: 10'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-016-late-binding-closure",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 3,
+    "error_message": "AssertionError: all closures returned the same value",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 11, in <module>\n    assert [f() for f in fns] == [0, 1, 2]\nAssertionError: all closures returned the same value",
+    "code_context": "def make_fns():\n    fns = []\n    for i in range(3):\n        fns.append(lambda: i)\n    return fns\n\nif __name__ == '__main__':\n    fns = make_fns()\n    assert [f() for f in fns] == [0, 1, 2], 'all closures returned the same value'\n    print('ok')\n",
+    "canonical_fixed_code": "def make_fns():\n    fns = []\n    for i in range(3):\n        fns.append(lambda i=i: i)\n    return fns\n\nif __name__ == '__main__':\n    fns = make_fns()\n    assert [f() for f in fns] == [0, 1, 2], 'all closures returned the same value'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-017-int-overflow-confusion",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: range check inverted",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 8, in <module>\n    assert in_range(5)\nAssertionError: range check inverted",
+    "code_context": "def in_range(x, low=0, high=10):\n    return x < low or x > high\n\nif __name__ == '__main__':\n    assert in_range(5), 'range check inverted'\n    assert not in_range(-1)\n    print('ok')\n",
+    "canonical_fixed_code": "def in_range(x, low=0, high=10):\n    return low <= x <= high\n\nif __name__ == '__main__':\n    assert in_range(5), 'range check inverted'\n    assert not in_range(-1)\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-018-recursion-no-base",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "RecursionError: maximum recursion depth exceeded",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 7, in <module>\n    assert factorial(5) == 120\n  File \"main.py\", line 2, in factorial\n    return n * factorial(n - 1)\nRecursionError: maximum recursion depth exceeded",
+    "code_context": "def factorial(n):\n    return n * factorial(n - 1)\n\nif __name__ == '__main__':\n    assert factorial(0) == 1\n    assert factorial(5) == 120\n    print('ok')\n",
+    "canonical_fixed_code": "def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nif __name__ == '__main__':\n    assert factorial(0) == 1\n    assert factorial(5) == 120\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-019-misuse-walrus",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 3,
+    "error_message": "AssertionError: counted past end",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 11, in <module>\n    assert count_until([1,2,3,0,4,5], 0) == 3\nAssertionError: counted past end",
+    "code_context": "def count_until(xs, sentinel):\n    n = 0\n    for x in xs:\n        n += 1   # bug: increments before sentinel check\n        if x == sentinel:\n            break\n    return n\n\nif __name__ == '__main__':\n    assert count_until([1, 2, 3, 0, 4, 5], 0) == 3, 'counted past end'\n    print('ok')\n",
+    "canonical_fixed_code": "def count_until(xs, sentinel):\n    n = 0\n    for x in xs:\n        if x == sentinel:\n            break\n        n += 1\n    return n\n\nif __name__ == '__main__':\n    assert count_until([1, 2, 3, 0, 4, 5], 0) == 3, 'counted past end'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-020-dict-shallow-copy",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 4,
+    "error_message": "AssertionError: original was mutated",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 11, in <module>\n    assert original == {'a': 1}\nAssertionError: original was mutated",
+    "code_context": "def with_extra(d, k, v):\n    out = d   # bug: alias, not copy\n    out[k] = v\n    return out\n\nif __name__ == '__main__':\n    original = {'a': 1}\n    new = with_extra(original, 'b', 2)\n    assert new == {'a': 1, 'b': 2}\n    assert original == {'a': 1}, 'original was mutated'\n    print('ok')\n",
+    "canonical_fixed_code": "def with_extra(d, k, v):\n    out = dict(d)\n    out[k] = v\n    return out\n\nif __name__ == '__main__':\n    original = {'a': 1}\n    new = with_extra(original, 'b', 2)\n    assert new == {'a': 1, 'b': 2}\n    assert original == {'a': 1}, 'original was mutated'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-021-bsearch-infinite-loop",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 4,
+    "error_message": "TimeoutError: binary_search ran too long",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 14, in <module>\n    assert binary_search([1,3,5,7], 4) == -1\nTimeoutError: binary_search ran too long",
+    "code_context": "def binary_search(arr, target):\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target: return mid\n        if arr[mid] < target: lo = mid\n        else: hi = mid\n    return -1\n\nif __name__ == '__main__':\n    import signal\n    signal.alarm(2) if hasattr(signal, 'alarm') else None\n    assert binary_search([1,3,5,7], 4) == -1\n    print('ok')\n",
+    "canonical_fixed_code": "def binary_search(arr, target):\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target: return mid\n        if arr[mid] < target: lo = mid + 1\n        else: hi = mid - 1\n    return -1\n\nif __name__ == '__main__':\n    assert binary_search([1,3,5,7], 4) == -1\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-022-toposort-cycle-silent",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "ValueError: cycle should have been detected",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 16, in <module>\n    raise AssertionError('cycle should have been detected')\nAssertionError: cycle should have been detected",
+    "code_context": "def toposort(graph):\n    visited, order = set(), []\n    def dfs(n):\n        if n in visited: return\n        visited.add(n)\n        for m in graph.get(n, []):\n            dfs(m)\n        order.append(n)\n    for node in graph: dfs(node)\n    return list(reversed(order))\n\nif __name__ == '__main__':\n    g = {'a': ['b'], 'b': ['c'], 'c': ['a']}\n    try:\n        toposort(g)\n        raise AssertionError('cycle should have been detected')\n    except ValueError:\n        print('ok')\n",
+    "canonical_fixed_code": "def toposort(graph):\n    WHITE, GREY, BLACK = 0, 1, 2\n    color = {n: WHITE for n in graph}\n    order = []\n    def dfs(n):\n        if color.get(n) == GREY: raise ValueError('cycle')\n        if color.get(n) == BLACK: return\n        color[n] = GREY\n        for m in graph.get(n, []):\n            dfs(m)\n        color[n] = BLACK\n        order.append(n)\n    for node in graph: dfs(node)\n    return list(reversed(order))\n\nif __name__ == '__main__':\n    g = {'a': ['b'], 'b': ['c'], 'c': ['a']}\n    try:\n        toposort(g)\n        raise AssertionError('cycle should have been detected')\n    except ValueError:\n        print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-023-product-via-sum",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: product wrong",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 6, in <module>\n    assert product([2,3,4]) == 24\nAssertionError: product wrong",
+    "code_context": "def product(xs):\n    return sum(xs)\n\nif __name__ == '__main__':\n    assert product([2,3,4]) == 24, 'product wrong'\n    print('ok')\n",
+    "canonical_fixed_code": "from functools import reduce\ndef product(xs):\n    return reduce(lambda a,b: a*b, xs, 1)\n\nif __name__ == '__main__':\n    assert product([2,3,4]) == 24, 'product wrong'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-024-shared-sublist-mult",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: rows aliased",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 9, in <module>\n    assert grid[0] == [1] and grid[1] == []\nAssertionError: rows aliased",
+    "code_context": "def make_grid(n):\n    return [[]] * n\n\nif __name__ == '__main__':\n    grid = make_grid(2)\n    grid[0].append(1)\n    assert grid[0] == [1] and grid[1] == [], 'rows aliased'\n    print('ok')\n",
+    "canonical_fixed_code": "def make_grid(n):\n    return [[] for _ in range(n)]\n\nif __name__ == '__main__':\n    grid = make_grid(2)\n    grid[0].append(1)\n    assert grid[0] == [1] and grid[1] == [], 'rows aliased'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-025-float-eq-vs-isclose",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: 0.1+0.2 not exactly 0.3",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 6, in <module>\n    assert sums_to(0.1, 0.2, 0.3)\nAssertionError: 0.1+0.2 not exactly 0.3",
+    "code_context": "def sums_to(a, b, target):\n    return (a + b) == target\n\nif __name__ == '__main__':\n    assert sums_to(0.1, 0.2, 0.3), '0.1+0.2 not exactly 0.3'\n    print('ok')\n",
+    "canonical_fixed_code": "import math\ndef sums_to(a, b, target):\n    return math.isclose(a + b, target)\n\nif __name__ == '__main__':\n    assert sums_to(0.1, 0.2, 0.3), '0.1+0.2 not exactly 0.3'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-026-sliding-window-no-shrink",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 4,
+    "error_message": "AssertionError: longest-substring length wrong",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 14, in <module>\n    assert longest_unique('abcabcbb') == 3\nAssertionError: longest-substring length wrong",
+    "code_context": "def longest_unique(s):\n    seen = {}\n    left = 0\n    best = 0\n    for right, ch in enumerate(s):\n        if ch in seen:\n            pass\n        seen[ch] = right\n        best = max(best, right - left + 1)\n    return best\n\nif __name__ == '__main__':\n    assert longest_unique('abcabcbb') == 3, 'longest-substring length wrong'\n    print('ok')\n",
+    "canonical_fixed_code": "def longest_unique(s):\n    seen = {}\n    left = 0\n    best = 0\n    for right, ch in enumerate(s):\n        if ch in seen and seen[ch] >= left:\n            left = seen[ch] + 1\n        seen[ch] = right\n        best = max(best, right - left + 1)\n    return best\n\nif __name__ == '__main__':\n    assert longest_unique('abcabcbb') == 3, 'longest-substring length wrong'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-027-pagination-last-page",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: last page missing items",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 8, in <module>\n    assert paginate([1,2,3,4,5], 2, 3) == [5]\nAssertionError: last page missing items",
+    "code_context": "def paginate(items, page_size, page_index_zero):\n    start = page_index_zero * page_size\n    return items[start:start + page_size - 1]\n\nif __name__ == '__main__':\n    assert paginate([1,2,3,4,5], 2, 0) == [1, 2], 'page 0 wrong'\n    assert paginate([1,2,3,4,5], 2, 2) == [5], 'last page missing items'\n    print('ok')\n",
+    "canonical_fixed_code": "def paginate(items, page_size, page_index_zero):\n    start = page_index_zero * page_size\n    return items[start:start + page_size]\n\nif __name__ == '__main__':\n    assert paginate([1,2,3,4,5], 2, 0) == [1, 2], 'page 0 wrong'\n    assert paginate([1,2,3,4,5], 2, 2) == [5], 'last page missing items'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-028-dict-modify-during-iter",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "RuntimeError: dictionary changed size during iteration",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 9, in <module>\n    drop_zero({'a': 0, 'b': 1, 'c': 0})\n  File \"main.py\", line 4, in drop_zero\n    del d[k]\nRuntimeError: dictionary changed size during iteration",
+    "code_context": "def drop_zero(d):\n    for k, v in d.items():\n        if v == 0:\n            del d[k]\n    return d\n\nif __name__ == '__main__':\n    out = drop_zero({'a': 0, 'b': 1, 'c': 0})\n    assert out == {'b': 1}\n    print('ok')\n",
+    "canonical_fixed_code": "def drop_zero(d):\n    for k in list(d.keys()):\n        if d[k] == 0:\n            del d[k]\n    return d\n\nif __name__ == '__main__':\n    out = drop_zero({'a': 0, 'b': 1, 'c': 0})\n    assert out == {'b': 1}\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-029-generator-skip-singleton",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: singleton element dropped",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 10, in <module>\n    assert list(uniq_consecutive([5])) == [5]\nAssertionError: singleton element dropped",
+    "code_context": "def uniq_consecutive(xs):\n    last = object()\n    for x in xs:\n        if x != last:\n            last = x\n        else:\n            yield x\n\nif __name__ == '__main__':\n    assert list(uniq_consecutive([5])) == [5], 'singleton element dropped'\n    print('ok')\n",
+    "canonical_fixed_code": "def uniq_consecutive(xs):\n    last = object()\n    for x in xs:\n        if x != last:\n            last = x\n            yield x\n\nif __name__ == '__main__':\n    assert list(uniq_consecutive([5])) == [5], 'singleton element dropped'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-030-empty-list-recursion",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "RecursionError: maximum recursion depth exceeded",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 8, in <module>\n    flatten([1, [2, []]])\nRecursionError: maximum recursion depth exceeded",
+    "code_context": "def flatten(x):\n    if isinstance(x, list):\n        return flatten(x[0]) + flatten(x[1:])\n    return [x]\n\nif __name__ == '__main__':\n    assert flatten([1, [2, []]]) == [1, 2]\n    print('ok')\n",
+    "canonical_fixed_code": "def flatten(x):\n    if isinstance(x, list):\n        if not x: return []\n        return flatten(x[0]) + flatten(x[1:])\n    return [x]\n\nif __name__ == '__main__':\n    assert flatten([1, [2, []]]) == [1, 2]\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-031-symm-vs-diff",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: difference returned wrong set",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 6, in <module>\n    assert only_in_a({1,2,3}, {2,3,4}) == {1}\nAssertionError: difference returned wrong set",
+    "code_context": "def only_in_a(a, b):\n    return a ^ b\n\nif __name__ == '__main__':\n    assert only_in_a({1,2,3}, {2,3,4}) == {1}, 'difference returned wrong set'\n    print('ok')\n",
+    "canonical_fixed_code": "def only_in_a(a, b):\n    return a - b\n\nif __name__ == '__main__':\n    assert only_in_a({1,2,3}, {2,3,4}) == {1}, 'difference returned wrong set'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-032-date-month-arithmetic",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 3,
+    "error_message": "AssertionError: month arithmetic wrong",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 9, in <module>\n    assert add_one_month(date(2026,1,31)) == date(2026,2,28)\nAssertionError: month arithmetic wrong",
+    "code_context": "from datetime import date, timedelta\ndef add_one_month(d):\n    return d + timedelta(days=30)\n\nif __name__ == '__main__':\n    expected = date(2026, 2, 28)\n    actual = add_one_month(date(2026, 1, 31))\n    assert actual == expected, 'month arithmetic wrong'\n    print('ok')\n",
+    "canonical_fixed_code": "from datetime import date\nimport calendar\ndef add_one_month(d):\n    y, m = (d.year, d.month + 1) if d.month < 12 else (d.year + 1, 1)\n    last = calendar.monthrange(y, m)[1]\n    return date(y, m, min(d.day, last))\n\nif __name__ == '__main__':\n    expected = date(2026, 2, 28)\n    actual = add_one_month(date(2026, 1, 31))\n    assert actual == expected, 'month arithmetic wrong'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-033-keyerror-vs-default",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 3,
+    "error_message": "KeyError: 'nickname'",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 7, in <module>\n    greet({'name': 'Alice'})\n  File \"main.py\", line 3, in greet\n    return f\"Hello, {profile['nickname'] or profile['name']}\"\nKeyError: 'nickname'",
+    "code_context": "def greet(profile):\n    return f\"Hello, {profile['nickname'] or profile['name']}\"\n\nif __name__ == '__main__':\n    assert greet({'name': 'Alice'}) == 'Hello, Alice'\n    print('ok')\n",
+    "canonical_fixed_code": "def greet(profile):\n    return f\"Hello, {profile.get('nickname') or profile['name']}\"\n\nif __name__ == '__main__':\n    assert greet({'name': 'Alice'}) == 'Hello, Alice'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-034-bit-add-vs-or",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: bitset combined incorrectly",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 6, in <module>\n    assert combine_flags(0b0011, 0b0010) == 0b0011\nAssertionError: bitset combined incorrectly",
+    "code_context": "def combine_flags(a, b):\n    return a + b\n\nif __name__ == '__main__':\n    assert combine_flags(0b0011, 0b0010) == 0b0011, 'bitset combined incorrectly'\n    print('ok')\n",
+    "canonical_fixed_code": "def combine_flags(a, b):\n    return a | b\n\nif __name__ == '__main__':\n    assert combine_flags(0b0011, 0b0010) == 0b0011, 'bitset combined incorrectly'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-035-sort-by-str",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: lexicographic sort applied to numeric strings",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 6, in <module>\n    assert sort_versions(['9','10','2']) == ['2','9','10']\nAssertionError: lexicographic sort applied to numeric strings",
+    "code_context": "def sort_versions(vs):\n    return sorted(vs)\n\nif __name__ == '__main__':\n    assert sort_versions(['9','10','2']) == ['2','9','10'], 'lex sort'\n    print('ok')\n",
+    "canonical_fixed_code": "def sort_versions(vs):\n    return sorted(vs, key=int)\n\nif __name__ == '__main__':\n    assert sort_versions(['9','10','2']) == ['2','9','10'], 'lex sort'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-036-naive-csv-split",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: split on comma broke quoted field",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 6, in <module>\n    assert parse('a,\"b,c\",d') == ['a', 'b,c', 'd']\nAssertionError: split on comma broke quoted field",
+    "code_context": "def parse(line):\n    return line.split(',')\n\nif __name__ == '__main__':\n    assert parse('a,\"b,c\",d') == ['a', 'b,c', 'd'], 'split broke quoted field'\n    print('ok')\n",
+    "canonical_fixed_code": "import csv, io\ndef parse(line):\n    return next(csv.reader(io.StringIO(line)))\n\nif __name__ == '__main__':\n    assert parse('a,\"b,c\",d') == ['a', 'b,c', 'd'], 'split broke quoted field'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-037-is-vs-eq-none",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: == None comparisons broke sentinel",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 11, in <module>\n    assert is_unset(Liar()) is False\nAssertionError: == None comparisons broke sentinel",
+    "code_context": "def is_unset(x):\n    return x == None\n\nclass Liar:\n    def __eq__(self, other):\n        return True\n\nif __name__ == '__main__':\n    assert is_unset(None) is True\n    assert is_unset(Liar()) is False, '== None broke sentinel'\n    print('ok')\n",
+    "canonical_fixed_code": "def is_unset(x):\n    return x is None\n\nclass Liar:\n    def __eq__(self, other):\n        return True\n\nif __name__ == '__main__':\n    assert is_unset(None) is True\n    assert is_unset(Liar()) is False, '== None broke sentinel'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-038-mutable-default-accumulator",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: state leaked between calls",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 7, in <module>\n    assert append_event('login', acc=None) == ['login']\nAssertionError: state leaked between calls",
+    "code_context": "def append_event(evt, acc=[]):\n    acc.append(evt)\n    return acc\n\nif __name__ == '__main__':\n    a = append_event('boot')\n    b = append_event('login')\n    assert b == ['login'], 'state leaked between calls'\n    print('ok')\n",
+    "canonical_fixed_code": "def append_event(evt, acc=None):\n    if acc is None: acc = []\n    acc.append(evt)\n    return acc\n\nif __name__ == '__main__':\n    a = append_event('boot')\n    b = append_event('login')\n    assert b == ['login'], 'state leaked between calls'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-039-enumerate-start",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 3,
+    "error_message": "AssertionError: row indexing should be 1-based",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 8, in <module>\n    assert numbered[0] == (1, 'a')\nAssertionError: row indexing should be 1-based",
+    "code_context": "def number_rows(rows):\n    return [(i, r) for i, r in enumerate(rows)]\n\nif __name__ == '__main__':\n    numbered = number_rows(['a','b','c'])\n    assert numbered[0] == (1, 'a'), 'row indexing should be 1-based'\n    assert numbered[2] == (3, 'c')\n    print('ok')\n",
+    "canonical_fixed_code": "def number_rows(rows):\n    return [(i, r) for i, r in enumerate(rows, start=1)]\n\nif __name__ == '__main__':\n    numbered = number_rows(['a','b','c'])\n    assert numbered[0] == (1, 'a'), 'row indexing should be 1-based'\n    assert numbered[2] == (3, 'c')\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  },
+  {
+    "bug_id": "syn-040-inclusive-vs-exclusive-range",
+    "project": "synthetic",
+    "language": "python",
+    "file_path": "main.py",
+    "line_number": 2,
+    "error_message": "AssertionError: range did not include endpoint",
+    "stack_trace": "Traceback (most recent call last):\n  File \"main.py\", line 6, in <module>\n    assert numbers_inclusive(1, 5) == [1,2,3,4,5]\nAssertionError: range did not include endpoint",
+    "code_context": "def numbers_inclusive(lo, hi):\n    return list(range(lo, hi))\n\nif __name__ == '__main__':\n    assert numbers_inclusive(1, 5) == [1,2,3,4,5], 'range missed endpoint'\n    print('ok')\n",
+    "canonical_fixed_code": "def numbers_inclusive(lo, hi):\n    return list(range(lo, hi + 1))\n\nif __name__ == '__main__':\n    assert numbers_inclusive(1, 5) == [1,2,3,4,5], 'range missed endpoint'\n    print('ok')\n",
+    "test_command": [
+      "python",
+      "main.py"
+    ]
+  }
+]

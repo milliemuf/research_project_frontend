@@ -33,8 +33,8 @@ function agentRing(type) {
         <h2 class="font-display text-lg text-ink-100">Byzantine Injection Lab</h2>
         <p class="text-[12px] text-ink-400 mt-1 leading-relaxed">
           Inject faults into individual agents and run PBFT scenarios. The system tolerates up to
-          <span class="text-ink-100 font-mono">f = {{ Math.floor(((lab.agents.length || 9) - 1) / 3) }}</span> faulty agents
-          out of <span class="text-ink-100 font-mono">{{ lab.agents.length || 9 }}</span> total (3f+1 requirement).
+          <span class="text-ink-100 font-mono">f = {{ Math.floor(((lab.agents.length || 4) - 1) / 3) }}</span> faulty validators
+          out of <span class="text-ink-100 font-mono">{{ lab.agents.length || 4 }}</span> total (3f+1 requirement).
         </p>
       </div>
       <div class="grid grid-cols-4 gap-2">

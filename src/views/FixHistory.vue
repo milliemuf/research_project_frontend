@@ -1,30 +1,35 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useBugsStore } from '@/stores/bugs'
-import { mockAgents } from '@/services/mock'
+import { bugResultsById } from '@/services/mock'
 
 const bugsStore = useBugsStore()
 const filter = ref('all')
 
 onMounted(() => bugsStore.fetchBugs())
 
-// Build fix history from resolved/failed bugs
+// Build fix history from resolved/failed bugs, using the REAL per-case results
+// (validator votes, tally, latency) where available (bugResultsById).
 const history = computed(() => {
-  const healers = mockAgents.filter(a => a.agent_type === 'healer')
   return bugsStore.bugs
     .filter(b => ['resolved', 'failed'].includes(b.status))
-    .map((b, i) => ({
-      id: `fix-${b.id}`,
-      bug_id: b.id,
-      bug_type: b.bug_type,
-      agent: healers[i % healers.length],
-      confidence: b.confidence ?? (0.65 + Math.random() * 0.3),
-      status: b.status === 'resolved' ? 'applied' : 'rejected',
-      created_at: b.detected_at,
-      applied_at: b.status === 'resolved' ? new Date(new Date(b.detected_at).getTime() + 1000 * 60 * 5).toISOString() : null,
-      duration_ms: 200 + Math.floor(Math.random() * 600),
-      lines_changed: 1 + Math.floor(Math.random() * 12),
-    }))
+    .map((b) => {
+      const r = bugResultsById[b.id] || {}
+      return {
+        id: `fix-${b.id}`,
+        bug_id: b.id,
+        bug_type: b.bug_type,
+        confidence: r.healer_confidence ?? b.confidence ?? 0.75,
+        status: b.status === 'resolved' ? 'applied' : 'rejected',
+        created_at: b.detected_at,
+        applied_at: b.status === 'resolved' ? new Date(new Date(b.detected_at).getTime() + 1000 * 60 * 6).toISOString() : null,
+        duration_ms: r.latency_ms ?? 180000,
+        lines_changed: r.lines_changed ?? 4,
+        tally: r.tally ?? '—',
+        dissenter: r.dissenter ?? null,
+        consensus_approved: r.consensus_approved ?? true,
+      }
+    })
     .filter(f => filter.value === 'all' ? true : f.status === filter.value)
 })
 
@@ -52,7 +57,7 @@ const fmt = (ts) => ts ? new Date(ts).toLocaleString([], { month: 'short', day: 
       <div class="panel-body p-0">
         <table class="tbl">
           <thead>
-            <tr><th>Fix</th><th>Bug</th><th>Healer</th><th>Confidence</th><th>Δ Lines</th><th>Latency</th><th>Result</th><th>Applied</th></tr>
+            <tr><th>Fix</th><th>Bug</th><th>Healer</th><th>Validator votes</th><th>Confidence</th><th>Δ Lines</th><th>Latency</th><th>Result</th><th>Applied</th></tr>
           </thead>
           <tbody>
             <tr v-for="f in history" :key="f.id">
@@ -64,7 +69,14 @@ const fmt = (ts) => ts ? new Date(ts).toLocaleString([], { month: 'short', day: 
               <td>
                 <div class="flex items-center gap-2">
                   <div class="w-6 h-6 rounded-md bg-agent-healer flex items-center justify-center text-white font-mono text-[10px] font-bold">H</div>
-                  <span class="font-mono text-[11px] text-cyan-300">{{ f.agent.llm_provider }}</span>
+                  <span class="font-mono text-[11px] text-cyan-300">GPT-4o</span>
+                </div>
+              </td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <span :class="['font-mono text-[12px] font-bold', f.tally === '4/4' ? 'text-emerald-300' : 'text-amber-300']">{{ f.tally }}</span>
+                  <span v-if="f.dissenter" class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/30">{{ f.dissenter }} ✗</span>
+                  <span v-else class="font-mono text-[10px] text-ink-500">unanimous</span>
                 </div>
               </td>
               <td>
@@ -74,7 +86,7 @@ const fmt = (ts) => ts ? new Date(ts).toLocaleString([], { month: 'short', day: 
                 </div>
               </td>
               <td class="font-mono text-[12px] text-ink-200">+{{ f.lines_changed }}</td>
-              <td class="font-mono text-[12px] text-ink-200">{{ f.duration_ms }}ms</td>
+              <td class="font-mono text-[12px] text-ink-200">{{ (f.duration_ms / 1000).toFixed(0) }}s</td>
               <td><span :class="['status', f.status === 'applied' ? 'status-resolved' : 'status-failed']">{{ f.status }}</span></td>
               <td class="font-mono text-[11px] text-ink-400">{{ fmt(f.applied_at) }}</td>
             </tr>

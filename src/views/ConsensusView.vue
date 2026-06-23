@@ -88,7 +88,7 @@ function agentColor(type) {
         <span class="tag tag-slate">N = <span class="text-ink-100">{{ layout.length || 9 }}</span></span>
         <span class="tag tag-slate">f ≤ <span class="text-ink-100">{{ byzantineTolerance }}</span></span>
         <span class="tag tag-emerald">Quorum 2f+1 = {{ requiredQuorum }}</span>
-        <span class="tag tag-violet">View #18</span>
+        <span class="tag tag-violet">view 0</span>
       </div>
     </section>
 
@@ -247,7 +247,7 @@ function agentColor(type) {
             <div class="flex items-center gap-3 mt-1 font-mono text-[10px]">
               <span><span class="text-cyan-300">{{ r.prepares.length }}</span><span class="text-ink-500">/{{ requiredQuorum }}</span> P</span>
               <span><span class="text-emerald-300">{{ r.commits.length }}</span><span class="text-ink-500">/{{ requiredQuorum }}</span> C</span>
-              <span class="text-ink-400 ml-auto">{{ r.durationMs }}ms</span>
+              <span class="text-ink-400 ml-auto">{{ r.durationMs >= 1000 ? (r.durationMs / 1000).toFixed(0) + 's' : r.durationMs + 'ms' }}</span>
             </div>
           </li>
         </ul>

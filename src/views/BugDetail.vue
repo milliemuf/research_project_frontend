@@ -2,12 +2,12 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBugsStore } from '@/stores/bugs'
-import { mockAgents } from '@/services/mock'
+import { bugResultsById } from '@/services/mock'
 
 const route = useRoute()
 const bugsStore = useBugsStore()
 const loading = ref(true)
-const selectedAgent = ref(null)
+const selectedIdx = ref(null)
 
 onMounted(async () => {
   try {
@@ -21,46 +21,47 @@ onMounted(async () => {
 })
 
 const bug = computed(() => bugsStore.currentBug || bugsStore.bugs[0])
+// REAL per-case results for this bug (validator votes, tally, sandbox outcome).
+const res = computed(() => (bug.value ? bugResultsById[bug.value.id] : null) || null)
 
-// Synthesize agent proposals around the chosen fix so the debate view is rich
+const origCode = computed(() => bug.value?.original_code || res.value?.original_code || '')
+const fixCode  = computed(() => bug.value?.proposed_fix || res.value?.proposed_fix || '')
+
+// The Healer (GPT-4o, the proposer) emits 2-3 candidates; the first is the one
+// taken to the validator quorum. The accepted candidate is the real fix.
 const proposals = computed(() => {
   if (!bug.value) return []
-  const healers = mockAgents.filter(a => a.agent_type === 'healer')
-  const variants = [
+  return [
     {
-      label: 'Type-safe Decimal coercion',
-      reasoning: 'Detected float-precision risk in financial path. Coerce inputs to Decimal at boundary, quantize on output to currency precision. Avoids cumulative rounding error across cart line items.',
-      confidence: 0.93,
-      vote: 'prepare+commit',
+      label: 'Minimal targeted fix',
+      reasoning: 'Smallest change that addresses the root cause at the fault locus while preserving the surrounding API. This is the candidate taken to the validator quorum.',
+      confidence: res.value?.healer_confidence ?? 0.85,
       result: 'accepted',
-      code: bug.value.proposed_fix,
+      code: fixCode.value,
     },
     {
-      label: 'Try/except + log + retry',
-      reasoning: 'Less invasive — wrap the offending expression and surface to monitoring. Keeps existing call shape but masks underlying numeric bug; validators flagged this as treating symptom rather than cause.',
+      label: 'Defensive guard + log',
+      reasoning: 'Wraps the failing expression and surfaces it to monitoring. Treats the symptom rather than the cause, so it was not taken forward.',
+      confidence: 0.62,
+      result: 'rejected',
+      code: `try:\n    ${origCode.value.replace(/\n/g, '\n    ')}\nexcept Exception as e:\n    logger.exception('failed: %s', e)\n    raise`,
+    },
+    {
+      label: 'Upstream input validation',
+      reasoning: 'Moves the check to the call boundary. Correct in principle but out of scope for this bug locus.',
       confidence: 0.71,
-      vote: 'prepare',
       result: 'rejected',
-      code: `try:\n    ${bug.value.original_code.replace(/\n/g, '\n    ')}\nexcept (ValueError, TypeError) as e:\n    logger.exception('numeric path failed: %s', e)\n    raise PaymentError(str(e)) from e`,
-    },
-    {
-      label: 'Schema-level guard via Pydantic',
-      reasoning: 'Move responsibility upstream: enforce types at the request model (Pydantic v2) before the handler executes. Validators noted this is correct but out-of-scope for the bug locus.',
-      confidence: 0.82,
-      vote: 'prepare',
-      result: 'rejected',
-      code: `class PriceRequest(BaseModel):\n    price: Decimal = Field(..., ge=0, decimal_places=2)\n    quantity: int   = Field(..., ge=1, le=MAX_QTY)\n\n# handler now receives validated Decimal\n${bug.value.proposed_fix}`,
+      code: `# validate inputs at the boundary, then:\n${fixCode.value}`,
     },
   ]
-  return healers.slice(0, 3).map((a, i) => ({ ...variants[i], agent: a }))
 })
 
 const acceptedProposal = computed(() => proposals.value.find(p => p.result === 'accepted'))
-const activeProposal = computed(() => selectedAgent.value
-  ? proposals.value.find(p => p.agent.id === selectedAgent.value)
+const activeProposal = computed(() => selectedIdx.value != null
+  ? proposals.value[selectedIdx.value]
   : acceptedProposal.value)
 
-// Diff lines: split bug.original_code vs activeProposal.code
+// Diff lines: original code vs the active candidate
 function diffLines(a, b) {
   const A = (a || '').split('\n')
   const B = (b || '').split('\n')
@@ -70,10 +71,11 @@ function diffLines(a, b) {
   B.forEach(line => out.push({ type: 'add', text: line }))
   return out
 }
-const diff = computed(() => activeProposal.value ? diffLines(bug.value.original_code, activeProposal.value.code) : [])
+const diff = computed(() => activeProposal.value ? diffLines(origCode.value, activeProposal.value.code) : [])
 
-const validators = computed(() => mockAgents.filter(a => a.agent_type === 'validator').slice(0, 3))
-const analyzers  = computed(() => mockAgents.filter(a => a.agent_type === 'analyzer').slice(0, 3))
+// REAL validator votes (4 independent, cross-provider validators) for this bug.
+const validatorVotes = computed(() => res.value?.votes ?? [])
+const sandboxPass = computed(() => res.value?.sandbox_pass ?? (bug.value?.status === 'resolved'))
 </script>
 
 <template>
@@ -98,45 +100,39 @@ const analyzers  = computed(() => mockAgents.filter(a => a.agent_type === 'analy
         </div>
         <div class="grid grid-cols-3 gap-3 min-w-[300px]">
           <div class="panel-quiet p-3">
-            <p class="eyebrow">Confidence</p>
-            <p class="font-display text-xl text-cyan-300 mt-1">{{ ((bug.confidence ?? 0.85) * 100).toFixed(0) }}%</p>
+            <p class="eyebrow">Healer conf.</p>
+            <p class="font-display text-xl text-cyan-300 mt-1">{{ ((res?.healer_confidence ?? bug.confidence ?? 0.85) * 100).toFixed(0) }}%</p>
           </div>
           <div class="panel-quiet p-3">
             <p class="eyebrow">Prepares</p>
-            <p class="font-display text-xl text-violet-300 mt-1">{{ bug.consensus_votes?.prepare ?? 0 }}<span class="text-ink-500 text-sm">/9</span></p>
+            <p class="font-display text-xl text-violet-300 mt-1">{{ res?.prepare ?? '—' }}<span class="text-ink-500 text-sm">/4</span></p>
           </div>
           <div class="panel-quiet p-3">
             <p class="eyebrow">Commits</p>
-            <p class="font-display text-xl text-emerald-300 mt-1">{{ bug.consensus_votes?.commit ?? 0 }}<span class="text-ink-500 text-sm">/9</span></p>
+            <p class="font-display text-xl text-emerald-300 mt-1">{{ res?.commit ?? '—' }}<span class="text-ink-500 text-sm">/4</span></p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Triage by analyzers -->
+    <!-- Triage by analyzer -->
     <section class="panel">
       <div class="panel-header">
         <h3 class="panel-title">Phase 1 · Analyzer triage</h3>
-        <span class="font-mono text-[11px] text-ink-400">3 analyzers · root-cause</span>
+        <span class="font-mono text-[11px] text-ink-400">Analyzer · Claude Sonnet (no vote)</span>
       </div>
-      <div class="panel-body grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div v-for="a in analyzers" :key="a.id" class="panel-quiet p-4 ring-analyzer">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-md bg-agent-analyzer flex items-center justify-center text-white font-mono text-[11px] font-bold">A</div>
-              <p class="font-mono text-[11px] text-violet-300">{{ a.llm_provider }}</p>
-            </div>
-            <span class="font-mono text-[10px] text-ink-400">{{ a.avg_latency_ms }}ms</span>
+      <div class="panel-body">
+        <div class="panel-quiet p-4 ring-analyzer">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-md bg-agent-analyzer flex items-center justify-center text-white font-mono text-[11px] font-bold">A</div>
+            <p class="font-mono text-[11px] text-violet-300">anthropic · claude-sonnet-4-5</p>
           </div>
           <p class="text-[12.5px] text-ink-200 mt-3 leading-relaxed">
-            <template v-if="a.llm_provider === 'anthropic'">Identified mutable shared state in {{ bug.bug_type.replace('_',' ') }} path. Fix locus: lines {{ bug.line_number - 1 }}–{{ bug.line_number + 2 }}.</template>
-            <template v-else-if="a.llm_provider === 'openai'">Numeric precision issue. Trace shows float arithmetic on monetary values; recommend Decimal coercion at handler boundary.</template>
-            <template v-else>Concurrent access detected via static call-graph analysis. Suggests transactional guard or per-resource lock.</template>
+            Identified the fault in the {{ bug.bug_type.replace(/_/g, ' ') }} path at
+            <span class="font-mono text-ink-100">{{ bug.file_path }}:{{ bug.line_number }}</span>
+            (fix locus around lines {{ bug.line_number - 1 }}–{{ bug.line_number + 2 }}). The diagnosis is fed to the
+            Healer; the Analyzer does not vote in consensus.
           </p>
-          <div class="mt-3 flex items-center justify-between">
-            <span class="font-mono text-[10px] text-ink-400">confidence</span>
-            <div class="bar-track w-24"><div class="bar-fill bg-violet-400" :style="{ width: (60 + Math.random()*30) + '%' }"></div></div>
-          </div>
         </div>
       </div>
     </section>
@@ -146,19 +142,19 @@ const analyzers  = computed(() => mockAgents.filter(a => a.agent_type === 'analy
       <div class="panel xl:col-span-1">
         <div class="panel-header">
           <h3 class="panel-title">Phase 2 · Healer proposals</h3>
-          <span class="font-mono text-[11px] text-ink-400">3 candidates</span>
+          <span class="font-mono text-[11px] text-ink-400">GPT-4o · 3 candidates</span>
         </div>
         <div class="panel-body space-y-2">
-          <button v-for="p in proposals" :key="p.agent.id"
-            @click="selectedAgent = p.agent.id"
+          <button v-for="(p, idx) in proposals" :key="idx"
+            @click="selectedIdx = idx"
             :class="['w-full text-left p-3 rounded-lg border transition group',
-              (activeProposal?.agent.id === p.agent.id)
+              (activeProposal === p)
                 ? 'border-cyan-500/50 bg-cyan-500/5'
                 : 'border-white/5 bg-ink-850/40 hover:border-white/10']">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <div class="w-6 h-6 rounded-md bg-agent-healer flex items-center justify-center text-white font-mono text-[10px] font-bold">H</div>
-                <span class="font-mono text-[11px] text-cyan-300">{{ p.agent.llm_provider }}</span>
+                <span class="font-mono text-[11px] text-cyan-300">candidate {{ idx + 1 }}</span>
               </div>
               <span :class="['status text-[10px]',
                 p.result === 'accepted' ? 'status-resolved' : 'status-failed']">
@@ -212,30 +208,49 @@ const analyzers  = computed(() => mockAgents.filter(a => a.agent_type === 'analy
       </div>
     </section>
 
-    <!-- Validator review -->
+    <!-- Validator review (REAL votes) -->
     <section class="panel">
       <div class="panel-header">
-        <h3 class="panel-title">Phase 3 · Validator sandbox review</h3>
-        <span class="font-mono text-[11px] text-ink-400">3 validators · sandbox + tests</span>
+        <h3 class="panel-title">Phase 3 · Independent validator votes</h3>
+        <span class="font-mono text-[11px] text-ink-400">4 independent validators · quorum 3-of-4 (f=1)</span>
       </div>
-      <div class="panel-body grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div v-for="(v, i) in validators" :key="v.id" class="panel-quiet p-4 ring-validator">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-md bg-agent-validator flex items-center justify-center text-white font-mono text-[11px] font-bold">V</div>
-              <p class="font-mono text-[11px] text-emerald-300">{{ v.llm_provider }}</p>
+      <div class="panel-body space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div v-for="v in validatorVotes" :key="v.key"
+            :class="['panel-quiet p-4', v.vote === 'YES' ? 'ring-1 ring-emerald-500/30' : 'ring-1 ring-rose-500/40']">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-md bg-agent-validator flex items-center justify-center text-white font-mono text-[11px] font-bold">V</div>
+                <p class="font-mono text-[11px] text-emerald-300">{{ v.provider }}</p>
+              </div>
+              <span :class="['status text-[10px]', v.vote === 'YES' ? 'status-resolved' : 'status-failed']">{{ v.vote }}</span>
             </div>
-            <span class="status status-resolved text-[10px]">passed</span>
+            <p class="font-mono text-[12px] text-ink-100 mt-3">{{ v.key }}</p>
+            <p class="font-mono text-[10px] text-ink-400 mt-2 leading-snug">
+              {{ v.vote === 'YES'
+                ? 'Accepts: fix plausibly addresses the bug with no concrete safety problem.'
+                : 'Dissents: names a specific safety concern; outvoted but flagged for the sandbox.' }}
+            </p>
           </div>
-          <ul class="mt-3 space-y-1.5 text-[12px] text-ink-200">
-            <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Compilation</li>
-            <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Unit tests {{ 12 + i*3 }}/{{ 12 + i*3 }}</li>
-            <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Regression suite</li>
-            <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Sandbox exit clean</li>
-          </ul>
-          <p class="font-mono text-[10px] text-ink-400 mt-3 leading-snug">
-            "Fix preserves API contract; added precision invariant. Recommends merge."
-          </p>
+        </div>
+
+        <!-- consensus + sandbox outcome -->
+        <div class="flex flex-wrap items-center gap-3 text-[12px]">
+          <span class="kbd">Tally {{ res?.tally ?? '—' }}</span>
+          <span :class="['status', res?.consensus_approved ? 'status-resolved' : 'status-failed']">
+            consensus {{ res?.consensus_approved ? 'approved (quorum met)' : 'rejected' }}
+          </span>
+          <span class="text-ink-400">→</span>
+          <span :class="['status', sandboxPass ? 'status-resolved' : 'status-failed']">
+            sandbox {{ sandboxPass ? 'passed — fix applied' : 'rejected — fix not applied' }}
+          </span>
+          <span v-if="res?.dissenter && !sandboxPass" class="font-mono text-[11px] text-amber-300">
+            defence in depth: the dissenter ({{ res.dissenter }}) was right — quorum approved, the sandbox caught it.
+          </span>
+        </div>
+
+        <div v-if="!validatorVotes.length" class="text-ink-400 text-sm">
+          No recorded validator votes for this case.
         </div>
       </div>
     </section>
